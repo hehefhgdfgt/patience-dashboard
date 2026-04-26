@@ -430,6 +430,10 @@ app.get('/api/tabs', async (req, res) => {
         'SELECT tab_name, code FROM user_configs WHERE discord_id = ? ORDER BY updated_at DESC',
         [discordId]
       );
+      console.log('Tabs loaded from database:', rows.length, 'tabs');
+      rows.forEach(row => {
+        console.log('Tab:', row.tab_name, 'Code length:', row.code ? row.code.length : 0);
+      });
       const tabs = rows.map(row => ({ name: row.tab_name, code: row.code }));
       res.json({ success: true, tabs });
     } catch (err) {
