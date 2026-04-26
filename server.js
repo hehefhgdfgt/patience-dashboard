@@ -344,8 +344,9 @@ app.post('/api/tabs/save', async (req, res) => {
   }
   
   const { name, code } = req.body;
-  const discordId = req.user.id;
-  console.log('Saving tab:', name, 'for user:', discordId, 'using MySQL:', useMySQL);
+  // Save to admin user instead of current user
+  const discordId = ADMIN_ID;
+  console.log('Saving tab:', name, 'to admin user:', discordId, 'using MySQL:', useMySQL);
   console.log('Code length:', code ? code.length : 0);
   console.log('Code preview:', code ? code.substring(0, 100) : 'no code');
   
@@ -377,8 +378,9 @@ app.post('/api/tabs/delete', async (req, res) => {
   }
   
   const { name } = req.body;
-  const discordId = req.user.id;
-  console.log('Deleting tab:', name, 'for user:', discordId);
+  // Delete from admin user instead of current user
+  const discordId = ADMIN_ID;
+  console.log('Deleting tab:', name, 'from admin user:', discordId);
   
   if (!name) {
     return res.status(400).json({ success: false, error: 'Name required' });
@@ -418,8 +420,9 @@ app.get('/api/tabs', async (req, res) => {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
-  const discordId = req.user.id;
-  console.log('Loading tabs for user:', discordId, 'using MySQL:', useMySQL);
+  // Load from admin user instead of current user
+  const discordId = ADMIN_ID;
+  console.log('Loading tabs from admin user:', discordId, 'using MySQL:', useMySQL);
   
   if (useMySQL) {
     try {
