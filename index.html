@@ -1187,9 +1187,139 @@ function switch_tab(name) {
 }
 async function add_tab() {
   let n=1; while(tabs.find(t=>t.name==="config "+n)) n++;
-  const name="config "+n, code="-- "+name+"\n";
-  tabs.push({name,code}); await api_post("/tabs/save",{name,code});
-  render_tabs(name); if(editor_ready){editor.setValue(code);set_dirty(false);} active_tab=name;
+  const name="config "+n;
+  const defaultConfig = `shared.coach = {
+    ['Main'] = {
+        ['Keybind'] = {
+            ['Silent Aim'] = { 'C', 'Toggle' },
+            ['Aim Assist'] = { 'X', 'Toggle' },
+            ['Triggerbot'] = { 'V', 'Toggle' },
+            ['Macro'] = { 'S', 'Hold' },
+            ['Esp'] = 'V'
+        },
+        ['Target'] = {
+            ['Mode'] = 'Target',
+            ['Unlock'] = {
+                ['Knocked'] = true,
+                ['Grabbed'] = true,
+            },
+        },
+    },
+
+    ['Combat'] = {
+        ['Silent Aim'] = {
+            ['Enabled'] = true,
+            ['Force Hit'] = true,
+            ['Hitpart'] = {
+                'Head',
+                'HumanoidRootPart'
+            },
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = false,
+                ['[TacticalShotgun]'] = true,
+            },
+        },
+        ['Aim Assist'] = {
+            ['Enabled'] = true,
+            ['Hitpart'] = {
+                'Head',
+                'HumanoidRootPart'
+            },
+            ['Smoothing'] = 0.5,
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = true,
+                ['[TacticalShotgun]'] = true,
+            }
+        },
+        ['Triggerbot'] = {
+            ['Enabled'] = true,
+            ['Delay'] = 0.01,
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = true,
+                ['[TacticalShotgun]'] = true,
+            },
+        },
+        ['Distance Check'] = {
+            ['Enabled'] = true,
+            ['Max Distance'] = 300,
+        },
+    },
+
+    ['Tools'] = {
+        ['Mods'] = {
+            ['Hitbox Expander'] = {
+                ['Enabled'] = true,
+                ['X'] = 2,
+                ['Y'] = 2,
+                ['Z'] = 2
+            },
+
+            ['Spread'] = {
+                ['Enabled'] = true,
+                ['Guns'] = {
+                    ['[Double-Barrel SG]'] = 0.77,
+                    ['[TacticalShotgun]'] = 0.77,
+                },
+            },
+
+            ['Delay'] = {
+                ['Enabled'] = false,
+                ['Guns'] = {
+                    ['[Double-Barrel SG]'] = 0,
+                    ['[Revolver]'] = 0,
+                    ['[TacticalShotgun]'] = 0,
+                },
+            },
+        },
+        ['Visual Mods'] = { 
+            ['Skin Changer'] = {
+                ['Enabled'] = true,
+                ['Skins'] = {
+                    ['[Double-Barrel SG]'] = 'Galaxy',
+                    ['[Revolver]'] = 'Galaxy',
+                    ['[TacticalShotgun]'] = 'Galaxy',
+                    ['[Knife]'] = 'Love Kukri',
+                },
+            },
+        },
+    },
+
+    ['Character'] = {
+        ['Macro'] = {
+            ['Enabled'] = true,
+            ['Keybind'] = { 'Z', 'Toggle' },
+            ['Delay'] = 0.014,
+            ['Mode'] = 'First Person',
+        },
+    },
+
+    ['Visuals'] = {
+        ['Fov'] = {
+            ['Enabled'] = true,
+            ['Visible'] = true,
+            ['Size'] = 11150,
+            ['Color'] = Color3.fromRGB(255, 255, 255),
+        },
+        ['Esp'] = {
+            ['Enabled'] = true,
+            ['Font'] = Enum.Font.Bangers,
+            ['Name'] = {
+                ['Enabled'] = true,
+                ['Color'] = Color3.fromRGB(255, 255, 255),
+                ['Position'] = 'Bottom',
+            },
+        },
+    },
+
+    ['No Jump Cooldown'] = {
+        ['Enabled'] = true,
+    },
+}`;
+  tabs.push({name,code:defaultConfig}); await api_post("/tabs/save",{name,code:defaultConfig});
+  render_tabs(name); if(editor_ready){editor.setValue(defaultConfig);set_dirty(false);} active_tab=name;
 }
 async function delete_tab(name) {
   if(tabs.length<=1){show_toast("cannot delete last tab","error");return;}
