@@ -1188,6 +1188,7 @@ function switch_tab(name) {
 async function add_tab() {
   let n=1; while(tabs.find(t=>t.name==="config "+n)) n++;
   const name="config "+n;
+  console.log('Creating new tab:', name);
   const defaultConfig = `shared.coach = {
     ['Main'] = {
         ['Keybind'] = {
@@ -1318,8 +1319,14 @@ async function add_tab() {
         ['Enabled'] = true,
     },
 }`;
-  tabs.push({name,code:defaultConfig}); await api_post("/tabs/save",{name,code:defaultConfig});
+  console.log('Default config length:', defaultConfig.length);
+  console.log('Default config preview:', defaultConfig.substring(0, 200));
+  tabs.push({name,code:defaultConfig}); 
+  console.log('Tab added to local tabs array');
+  await api_post("/tabs/save",{name,code:defaultConfig});
+  console.log('Tab saved to server');
   render_tabs(name); if(editor_ready){editor.setValue(defaultConfig);set_dirty(false);} active_tab=name;
+  console.log('Tab rendered and activated');
 }
 async function delete_tab(name) {
   if(tabs.length<=1){show_toast("cannot delete last tab","error");return;}
