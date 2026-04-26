@@ -1341,7 +1341,8 @@ async function do_save(silent=false) {
   if(!editor_ready||!active_tab) return;
   const code=editor.getValue(), t=tabs.find(t=>t.name===active_tab);
   if(t) t.code=code;
-  try { const data=await api_post("/tabs/save",{name:active_tab,code}); if(data.success)set_dirty(false); else if(!silent)show_toast(data.message||"save failed","error"); }
+  console.log('Saving config:', active_tab, 'Code length:', code.length);
+  try { const data=await api_post("/tabs/save",{name:active_tab,code}); if(data.success){set_dirty(false); console.log('Save successful');} else if(!silent)show_toast(data.message||"save failed","error"); }
   catch{ if(!silent)show_toast("could not reach server","error"); }
 }
 async function do_set() {
