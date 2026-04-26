@@ -691,7 +691,7 @@ function open_view_modal(config) {
   if (config.has_password) {
     const locked = document.createElement("div");
     locked.className = "view_preview_locked";
-    locked.textContent = "shared.coach = {\n    ['combat'] = {\n        ['aimbot'] = {\n            ['enabled'] = true,\n            ['smoothness'] = 0.13,\n            ['hit_bone'] = \"head\",\n        },\n        ['silent_aim'] = {\n            ['enabled'] = true,\n            ['hit_chance'] = 100,\n        },\n    },\n    ['visuals'] = {\n        ['name'] = { ['enabled'] = true },\n    },\n}";
+    locked.textContent = "shared.coach = {\n    ['Main'] = { ... },\n    ['Combat'] = { ... },\n    ['Tools'] = { ... },\n    ['Character'] = { ... },\n    ['Visuals'] = { ... },\n    ['No Jump Cooldown'] = { ... },\n}";
     prev_el.innerHTML = ""; prev_el.appendChild(locked);
   } else { prev_el.textContent = "loading&hellip;"; fetch_view_preview(config.id); }
 
@@ -868,7 +868,137 @@ async function enter_dashboard() {
       else { editor.setValue(tabs[0].code); set_dirty(false); }
     } else {
       // Default config if no tabs exist
-      tabs = [{ name:"config", code:"-- config\nshared.coach = {}\n" }];
+      const defaultConfig = `shared.coach = {
+    ['Main'] = {
+        ['Keybind'] = {
+            ['Silent Aim'] = { 'C', 'Toggle' },
+            ['Aim Assist'] = { 'X', 'Toggle' },
+            ['Triggerbot'] = { 'V', 'Toggle' },
+            ['Macro'] = { 'S', 'Hold' },
+            ['Esp'] = 'V'
+        },
+        ['Target'] = {
+            ['Mode'] = 'Target',
+            ['Unlock'] = {
+                ['Knocked'] = true,
+                ['Grabbed'] = true,
+            },
+        },
+    },
+
+    ['Combat'] = {
+        ['Silent Aim'] = {
+            ['Enabled'] = true,
+            ['Force Hit'] = true,
+            ['Hitpart'] = {
+                'Head',
+                'HumanoidRootPart'
+            },
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = false,
+                ['[TacticalShotgun]'] = true,
+            },
+        },
+        ['Aim Assist'] = {
+            ['Enabled'] = true,
+            ['Hitpart'] = {
+                'Head',
+                'HumanoidRootPart'
+            },
+            ['Smoothing'] = 0.5,
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = true,
+                ['[TacticalShotgun]'] = true,
+            }
+        },
+        ['Triggerbot'] = {
+            ['Enabled'] = true,
+            ['Delay'] = 0.01,
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = true,
+                ['[TacticalShotgun]'] = true,
+            },
+        },
+        ['Distance Check'] = {
+            ['Enabled'] = true,
+            ['Max Distance'] = 300,
+        },
+    },
+
+    ['Tools'] = {
+        ['Mods'] = {
+            ['Hitbox Expander'] = {
+                ['Enabled'] = true,
+                ['X'] = 2,
+                ['Y'] = 2,
+                ['Z'] = 2
+            },
+
+            ['Spread'] = {
+                ['Enabled'] = true,
+                ['Guns'] = {
+                    ['[Double-Barrel SG]'] = 0.77,
+                    ['[TacticalShotgun]'] = 0.77,
+                },
+            },
+
+            ['Delay'] = {
+                ['Enabled'] = false,
+                ['Guns'] = {
+                    ['[Double-Barrel SG]'] = 0,
+                    ['[Revolver]'] = 0,
+                    ['[TacticalShotgun]'] = 0,
+                },
+            },
+        },
+        ['Visual Mods'] = { 
+            ['Skin Changer'] = {
+                ['Enabled'] = true,
+                ['Skins'] = {
+                    ['[Double-Barrel SG]'] = 'Galaxy',
+                    ['[Revolver]'] = 'Galaxy',
+                    ['[TacticalShotgun]'] = 'Galaxy',
+                    ['[Knife]'] = 'Love Kukri',
+                },
+            },
+        },
+    },
+
+    ['Character'] = {
+        ['Macro'] = {
+            ['Enabled'] = true,
+            ['Keybind'] = { 'Z', 'Toggle' },
+            ['Delay'] = 0.014,
+            ['Mode'] = 'First Person',
+        },
+    },
+
+    ['Visuals'] = {
+        ['Fov'] = {
+            ['Enabled'] = true,
+            ['Visible'] = true,
+            ['Size'] = 11150,
+            ['Color'] = Color3.fromRGB(255, 255, 255),
+        },
+        ['Esp'] = {
+            ['Enabled'] = true,
+            ['Font'] = Enum.Font.Bangers,
+            ['Name'] = {
+                ['Enabled'] = true,
+                ['Color'] = Color3.fromRGB(255, 255, 255),
+                ['Position'] = 'Bottom',
+            },
+        },
+    },
+
+    ['No Jump Cooldown'] = {
+        ['Enabled'] = true,
+    },
+}`;
+      tabs = [{ name:"config", code:defaultConfig }];
       render_tabs("config");
       if (!editor_ready) init_monaco(tabs[0].code);
       else { editor.setValue(tabs[0].code); set_dirty(false); }
@@ -876,7 +1006,137 @@ async function enter_dashboard() {
   } catch(e) {
     console.error('Error loading tabs:', e);
     // Fallback to default config
-    tabs = [{ name:"config", code:"-- config\nshared.coach = {}\n" }];
+    const defaultConfig = `shared.coach = {
+    ['Main'] = {
+        ['Keybind'] = {
+            ['Silent Aim'] = { 'C', 'Toggle' },
+            ['Aim Assist'] = { 'X', 'Toggle' },
+            ['Triggerbot'] = { 'V', 'Toggle' },
+            ['Macro'] = { 'S', 'Hold' },
+            ['Esp'] = 'V'
+        },
+        ['Target'] = {
+            ['Mode'] = 'Target',
+            ['Unlock'] = {
+                ['Knocked'] = true,
+                ['Grabbed'] = true,
+            },
+        },
+    },
+
+    ['Combat'] = {
+        ['Silent Aim'] = {
+            ['Enabled'] = true,
+            ['Force Hit'] = true,
+            ['Hitpart'] = {
+                'Head',
+                'HumanoidRootPart'
+            },
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = false,
+                ['[TacticalShotgun]'] = true,
+            },
+        },
+        ['Aim Assist'] = {
+            ['Enabled'] = true,
+            ['Hitpart'] = {
+                'Head',
+                'HumanoidRootPart'
+            },
+            ['Smoothing'] = 0.5,
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = true,
+                ['[TacticalShotgun]'] = true,
+            }
+        },
+        ['Triggerbot'] = {
+            ['Enabled'] = true,
+            ['Delay'] = 0.01,
+            ['Weapon Configuration'] = {
+                ['[Double-Barrel SG]'] = true,
+                ['[Revolver]'] = true,
+                ['[TacticalShotgun]'] = true,
+            },
+        },
+        ['Distance Check'] = {
+            ['Enabled'] = true,
+            ['Max Distance'] = 300,
+        },
+    },
+
+    ['Tools'] = {
+        ['Mods'] = {
+            ['Hitbox Expander'] = {
+                ['Enabled'] = true,
+                ['X'] = 2,
+                ['Y'] = 2,
+                ['Z'] = 2
+            },
+
+            ['Spread'] = {
+                ['Enabled'] = true,
+                ['Guns'] = {
+                    ['[Double-Barrel SG]'] = 0.77,
+                    ['[TacticalShotgun]'] = 0.77,
+                },
+            },
+
+            ['Delay'] = {
+                ['Enabled'] = false,
+                ['Guns'] = {
+                    ['[Double-Barrel SG]'] = 0,
+                    ['[Revolver]'] = 0,
+                    ['[TacticalShotgun]'] = 0,
+                },
+            },
+        },
+        ['Visual Mods'] = { 
+            ['Skin Changer'] = {
+                ['Enabled'] = true,
+                ['Skins'] = {
+                    ['[Double-Barrel SG]'] = 'Galaxy',
+                    ['[Revolver]'] = 'Galaxy',
+                    ['[TacticalShotgun]'] = 'Galaxy',
+                    ['[Knife]'] = 'Love Kukri',
+                },
+            },
+        },
+    },
+
+    ['Character'] = {
+        ['Macro'] = {
+            ['Enabled'] = true,
+            ['Keybind'] = { 'Z', 'Toggle' },
+            ['Delay'] = 0.014,
+            ['Mode'] = 'First Person',
+        },
+    },
+
+    ['Visuals'] = {
+        ['Fov'] = {
+            ['Enabled'] = true,
+            ['Visible'] = true,
+            ['Size'] = 11150,
+            ['Color'] = Color3.fromRGB(255, 255, 255),
+        },
+        ['Esp'] = {
+            ['Enabled'] = true,
+            ['Font'] = Enum.Font.Bangers,
+            ['Name'] = {
+                ['Enabled'] = true,
+                ['Color'] = Color3.fromRGB(255, 255, 255),
+                ['Position'] = 'Bottom',
+            },
+        },
+    },
+
+    ['No Jump Cooldown'] = {
+        ['Enabled'] = true,
+    },
+}`;
+    tabs = [{ name:"config", code:defaultConfig }];
     render_tabs("config");
     if (!editor_ready) init_monaco(tabs[0].code);
     else { editor.setValue(tabs[0].code); set_dirty(false); }
