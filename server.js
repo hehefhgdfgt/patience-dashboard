@@ -325,6 +325,52 @@ app.post('/api/admin/whitelist/remove', async (req, res) => {
   }
 });
 
+// API: Save tab
+app.post('/api/tabs/save', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  const { name, code } = req.body;
+  console.log('Saving tab:', name, 'using MySQL:', useMySQL);
+  
+  // For now, just return success (tabs are stored in memory on frontend)
+  res.json({ success: true });
+});
+
+// API: Delete tab
+app.post('/api/tabs/delete', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  const { name } = req.body;
+  console.log('Deleting tab:', name);
+  
+  res.json({ success: true });
+});
+
+// API: Set active tab
+app.post('/api/tabs/set', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  const { name } = req.body;
+  console.log('Setting active tab:', name);
+  
+  res.json({ success: true });
+});
+
+// API: Get tabs
+app.get('/api/tabs', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  res.json({ success: true, tabs: [] });
+});
+
 // Serve the frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
