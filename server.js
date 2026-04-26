@@ -346,6 +346,8 @@ app.post('/api/tabs/save', async (req, res) => {
   const { name, code } = req.body;
   const discordId = req.user.id;
   console.log('Saving tab:', name, 'for user:', discordId, 'using MySQL:', useMySQL);
+  console.log('Code length:', code ? code.length : 0);
+  console.log('Code preview:', code ? code.substring(0, 100) : 'no code');
   
   if (!name || !code) {
     return res.status(400).json({ success: false, error: 'Name and code required' });
