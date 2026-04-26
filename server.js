@@ -279,6 +279,7 @@ app.post('/api/admin/whitelist/add', async (req, res) => {
   }
   
   const { discord_id, username } = req.body;
+  console.log('Adding to whitelist:', discord_id, username, 'using MySQL:', useMySQL);
   if (!discord_id) {
     return res.status(400).json({ success: false, error: 'Discord ID required' });
   }
@@ -289,6 +290,7 @@ app.post('/api/admin/whitelist/add', async (req, res) => {
   }
   
   const success = await addToWhitelist(discord_id, username || null, req.user.id);
+  console.log('Add to whitelist result:', success);
   
   if (success) {
     res.json({ success: true });
@@ -304,6 +306,7 @@ app.post('/api/admin/whitelist/remove', async (req, res) => {
   }
   
   const { discord_id } = req.body;
+  console.log('Removing from whitelist:', discord_id, 'using MySQL:', useMySQL);
   if (!discord_id) {
     return res.status(400).json({ success: false, error: 'Discord ID required' });
   }
@@ -313,6 +316,7 @@ app.post('/api/admin/whitelist/remove', async (req, res) => {
   }
   
   const success = await removeFromWhitelist(discord_id);
+  console.log('Remove from whitelist result:', success);
   
   if (success) {
     res.json({ success: true });
