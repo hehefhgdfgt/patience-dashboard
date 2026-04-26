@@ -1,4 +1,4 @@
-# Coach.cc Dashboard - Discord OAuth2 Authentication
+# Coachtopia.fun Dashboard - Discord OAuth2 Authentication
 
 A dashboard with Discord OAuth2 authentication and whitelist management system.
 
@@ -11,7 +11,7 @@ A dashboard with Discord OAuth2 authentication and whitelist management system.
 3. Go to the "OAuth2" tab
 4. Under "Redirects", add these URLs:
    - **Local development:** `http://localhost:3000/auth/discord/callback`
-   - **Railway:** `https://your-app.railway.app/auth/discord/callback` (replace with your Railway URL)
+   - **Production:** `https://coachtopia.fun/auth/discord/callback`
 5. Copy the **Client ID** and **Client Secret**
 
 ### 2. Install Dependencies
