@@ -172,6 +172,7 @@ app.use(express.static(path.join(__dirname)));
 // Passport Discord OAuth2 Strategy
 const PUBLIC_DOMAIN = process.env.RAILWAY_PUBLIC_DOMAIN || 'localhost:3000';
 const CALLBACK_URL = `https://${PUBLIC_DOMAIN}/auth/discord/callback`;
+console.log('OAuth configured with callback URL:', CALLBACK_URL);
 
 passport.use('discord', new OAuth2Strategy({
   authorizationURL: 'https://discord.com/oauth2/authorize',
