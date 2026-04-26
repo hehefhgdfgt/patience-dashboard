@@ -1,4 +1,4 @@
-# Patience Dashboard - Discord OAuth2 Authentication
+# Coach.cc Dashboard - Discord OAuth2 Authentication
 
 A dashboard with Discord OAuth2 authentication and whitelist management system.
 
