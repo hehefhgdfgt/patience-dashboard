@@ -1188,12 +1188,15 @@ function render_file_tree() {
   });
 }
 function switch_tab(name) {
+  console.log('switch_tab called with:', name, 'current active_tab:', active_tab);
   if (name===active_tab) return;
   const cur = tabs.find(t=>t.name===active_tab);
   if (cur&&editor_ready) cur.code=editor.getValue();
   active_tab=name; const t=tabs.find(t=>t.name===name);
+  console.log('Setting active_tab to:', name, 'tab found:', !!t);
   if (t&&editor_ready) { editor.setValue(t.code); set_dirty(false); }
   render_tabs(name);
+  console.log('switch_tab complete, active_tab is now:', active_tab);
 }
 async function add_tab() {
   let n=1; while(tabs.find(t=>t.name==="config "+n)) n++;
