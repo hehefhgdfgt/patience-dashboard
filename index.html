@@ -863,7 +863,8 @@ async function enter_dashboard() {
     const data = await api_get("/tabs");
     if (data.success && data.tabs && data.tabs.length > 0) {
       tabs = data.tabs;
-      render_tabs(tabs[0].name);
+      active_tab = tabs[0].name;
+      render_tabs(active_tab);
       if (!editor_ready) init_monaco(tabs[0].code);
       else { editor.setValue(tabs[0].code); set_dirty(false); }
     } else {
@@ -999,7 +1000,8 @@ async function enter_dashboard() {
     },
 }`;
       tabs = [{ name:"config", code:defaultConfig }];
-      render_tabs("config");
+      active_tab = "config";
+      render_tabs(active_tab);
       if (!editor_ready) init_monaco(tabs[0].code);
       else { editor.setValue(tabs[0].code); set_dirty(false); }
     }
@@ -1137,7 +1139,8 @@ async function enter_dashboard() {
     },
 }`;
     tabs = [{ name:"config", code:defaultConfig }];
-    render_tabs("config");
+    active_tab = "config";
+    render_tabs(active_tab);
     if (!editor_ready) init_monaco(tabs[0].code);
     else { editor.setValue(tabs[0].code); set_dirty(false); }
   }
