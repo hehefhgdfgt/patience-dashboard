@@ -69,6 +69,18 @@ async function initDB() {
       )
     `);
     
+    // Create user_configs table if not exists
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS user_configs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        discord_id VARCHAR(255) NOT NULL,
+        tab_name VARCHAR(255) NOT NULL,
+        code TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_tab (discord_id, tab_name)
+      )
+    `);
+    
     // Insert admin if not exists
     await db.execute(
       'INSERT IGNORE INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
@@ -332,10 +344,28 @@ app.post('/api/tabs/save', async (req, res) => {
   }
   
   const { name, code } = req.body;
-  console.log('Saving tab:', name, 'using MySQL:', useMySQL);
+  const discordId = req.user.id;
+  console.log('Saving tab:', name, 'for user:', discordId, 'using MySQL:', useMySQL);
   
-  // For now, just return success (tabs are stored in memory on frontend)
-  res.json({ success: true });
+  if (!name || !code) {
+    return res.status(400).json({ success: false, error: 'Name and code required' });
+  }
+  
+  if (useMySQL) {
+    try {
+      await db.execute(
+        'INSERT INTO user_configs (discord_id, tab_name, code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE code = ?, updated_at = CURRENT_TIMESTAMP',
+        [discordId, name, code, code]
+      );
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Error saving tab:', err);
+      res.status(500).json({ success: false, error: 'Failed to save tab' });
+    }
+  } else {
+    // Fallback to memory (not persistent)
+    res.json({ success: true });
+  }
 });
 
 // API: Delete tab
@@ -345,9 +375,27 @@ app.post('/api/tabs/delete', async (req, res) => {
   }
   
   const { name } = req.body;
-  console.log('Deleting tab:', name);
+  const discordId = req.user.id;
+  console.log('Deleting tab:', name, 'for user:', discordId);
   
-  res.json({ success: true });
+  if (!name) {
+    return res.status(400).json({ success: false, error: 'Name required' });
+  }
+  
+  if (useMySQL) {
+    try {
+      await db.execute(
+        'DELETE FROM user_configs WHERE discord_id = ? AND tab_name = ?',
+        [discordId, name]
+      );
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Error deleting tab:', err);
+      res.status(500).json({ success: false, error: 'Failed to delete tab' });
+    }
+  } else {
+    res.json({ success: true });
+  }
 });
 
 // API: Set active tab
@@ -368,7 +416,24 @@ app.get('/api/tabs', async (req, res) => {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
-  res.json({ success: true, tabs: [] });
+  const discordId = req.user.id;
+  console.log('Loading tabs for user:', discordId, 'using MySQL:', useMySQL);
+  
+  if (useMySQL) {
+    try {
+      const [rows] = await db.execute(
+        'SELECT tab_name, code FROM user_configs WHERE discord_id = ? ORDER BY updated_at DESC',
+        [discordId]
+      );
+      const tabs = rows.map(row => ({ name: row.tab_name, code: row.code }));
+      res.json({ success: true, tabs });
+    } catch (err) {
+      console.error('Error loading tabs:', err);
+      res.status(500).json({ success: false, error: 'Failed to load tabs' });
+    }
+  } else {
+    res.json({ success: true, tabs: [] });
+  }
 });
 
 // Serve the frontend

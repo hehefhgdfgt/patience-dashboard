@@ -858,11 +858,29 @@ async function enter_dashboard() {
   show_dashboard();
   console.log('Dashboard shown');
   
-  // Initialize tabs with default config
-  tabs = [{ name:"config", code:"-- config\nshared.coach = {}\n" }];
-  render_tabs("config");
-  if (!editor_ready) init_monaco(tabs[0].code);
-  else { editor.setValue(tabs[0].code); set_dirty(false); }
+  // Load user tabs from server
+  try {
+    const data = await api_get("/tabs");
+    if (data.success && data.tabs && data.tabs.length > 0) {
+      tabs = data.tabs;
+      render_tabs(tabs[0].name);
+      if (!editor_ready) init_monaco(tabs[0].code);
+      else { editor.setValue(tabs[0].code); set_dirty(false); }
+    } else {
+      // Default config if no tabs exist
+      tabs = [{ name:"config", code:"-- config\nshared.coach = {}\n" }];
+      render_tabs("config");
+      if (!editor_ready) init_monaco(tabs[0].code);
+      else { editor.setValue(tabs[0].code); set_dirty(false); }
+    }
+  } catch(e) {
+    console.error('Error loading tabs:', e);
+    // Fallback to default config
+    tabs = [{ name:"config", code:"-- config\nshared.coach = {}\n" }];
+    render_tabs("config");
+    if (!editor_ready) init_monaco(tabs[0].code);
+    else { editor.setValue(tabs[0].code); set_dirty(false); }
+  }
 }
 
 function make_av_fallback(n) { const el=document.createElement("div"); el.className="dash_avatar_fallback"; el.textContent=(n||"?").charAt(0).toUpperCase(); return el; }
