@@ -1225,8 +1225,8 @@ function init_monaco(initial_code) {
   require(["vs/editor/editor.main"],function(){
     monaco.editor.defineTheme("coachDark",{
       base:"vs-dark",inherit:true,
-      rules:[{token:"comment",foreground:"3d3a52",fontStyle:"italic"},{token:"keyword",foreground:"a78bfa"},{token:"string",foreground:"7dd3fc"},{token:"number",foreground:"f9a8d4"},{token:"type",foreground:"6ee7b7"}],
-      colors:{"editor.background":"#0a0a0b","editor.foreground":"#d4d0e8","editor.lineHighlightBackground":"#ffffff06","editorLineNumber.foreground":"#2a2733","editorLineNumber.activeForeground":"#6d5aac","editor.selectionBackground":"#6d28d930","editorCursor.foreground":"#8b5cf6","scrollbarSlider.background":"#ffffff06","scrollbarSlider.hoverBackground":"#ffffff0e","minimap.background":"#0a0a0b","editorWidget.background":"#0f0f12","editorWidget.border":"#1e1a2e","input.background":"#0f0f12","input.foreground":"#d4d0e8","focusBorder":"#6d28d970"}
+      rules:[{token:"comment",foreground:"3d3a52",fontStyle:"italic"},{token:"keyword",foreground:"ffffff"},{token:"string",foreground:"e5e5e5"},{token:"number",foreground:"f0f0f0"},{token:"type",foreground:"e0e0e0"}],
+      colors:{"editor.background":"#0a0a0b","editor.foreground":"#d4d0e8","editor.lineHighlightBackground":"#ffffff06","editorLineNumber.foreground":"#2a2733","editorLineNumber.activeForeground":"#ffffff","editor.selectionBackground":"#ffffff15","editorCursor.foreground":"#ffffff","scrollbarSlider.background":"#ffffff06","scrollbarSlider.hoverBackground":"#ffffff0e","minimap.background":"#0a0a0b","editorWidget.background":"#0f0f12","editorWidget.border":"#ffffff20","input.background":"#0f0f12","input.foreground":"#d4d0e8","focusBorder":"#ffffff30"}
     });
     editor=monaco.editor.create(document.getElementById("editor_container"),{
       value:initial_code,language:"lua",theme:"coachDark",
