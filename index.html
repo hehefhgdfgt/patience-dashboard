@@ -308,10 +308,13 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 .ide_file_item:hover{background:rgba(255,255,255,0.05);color:var(--text)}
 .ide_file_item.active{background:rgba(255,255,255,0.1);color:var(--text)}
 .ide_file_item svg{width:14px;height:14px;opacity:0.7}
+.ide_file_delete{margin-left:auto;width:16px;height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.15s;font-size:14px;color:var(--muted)}
+.ide_file_item:hover .ide_file_delete{opacity:1}
+.ide_file_delete:hover{background:rgba(248,113,113,0.2);color:#f87171}
 
 /* Editor Area */
 .ide_editor_area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.ide_tabs_bar{height:35px;flex-shrink:0;display:flex;align-items:center;background:#0d0d0f;border-bottom:1px solid var(--border);overflow-x:auto;overflow-y:hidden}
+.ide_tabs_bar{height:35px;flex-shrink:0;display:none;align-items:center;background:#0d0d0f;border-bottom:1px solid var(--border);overflow-x:auto;overflow-y:hidden}
 .ide_tabs_bar::-webkit-scrollbar{height:0}
 .ide_tab{display:flex;align-items:center;gap:8px;padding:0 14px;height:35px;border-right:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all 0.15s;position:relative;background:transparent;border:none}
 .ide_tab:hover{background:rgba(255,255,255,0.03);color:var(--text)}
@@ -526,8 +529,8 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
       <!-- Left Sidebar - File Explorer -->
       <div class="ide_sidebar">
         <div class="ide_sidebar_header">
-          <span class="ide_sidebar_title">scripts</span>
-          <button class="ide_sidebar_add" onclick="add_new_script()" title="new script">+</button>
+          <span class="ide_sidebar_title">configs</span>
+          <button class="ide_sidebar_add" onclick="add_tab()" title="new config">+</button>
         </div>
         <div class="ide_file_tree" id="file_tree">
           <!-- Scripts will be populated here -->
@@ -1181,7 +1184,8 @@ function render_file_tree() {
     item.className = "ide_file_item"+(t.name===active_tab?" active":"");
     item.innerHTML = `
       <svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-      <span>${esc(t.name)}.lua</span>
+      <span>${esc(t.name)}</span>
+      <span class="ide_file_delete" onclick="event.stopPropagation();delete_tab('${esc(t.name)}')">&times;</span>
     `;
     item.onclick = () => switch_tab(t.name);
     tree.appendChild(item);
