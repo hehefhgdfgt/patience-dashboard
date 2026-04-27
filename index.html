@@ -636,6 +636,8 @@ function onTurnstileSuccess(token) {
 async function verifyCaptchaAndUnlock() {
   if (!turnstileToken) return;
   
+  console.log('Verifying CAPTCHA token...');
+  
   try {
     const response = await fetch('/api/turnstile/verify', {
       method: 'POST',
@@ -644,14 +646,24 @@ async function verifyCaptchaAndUnlock() {
     });
     
     const data = await response.json();
+    console.log('CAPTCHA verification response:', data);
     
     if (data.success) {
       captchaVerified = true;
       const modal = document.getElementById('captcha-modal');
-      if (modal) modal.style.display = 'none';
+      if (modal) {
+        modal.style.display = 'none';
+        console.log('CAPTCHA modal hidden, page unlocked');
+      }
+      // Reload page to ensure clean state
+      window.location.reload();
+    } else {
+      console.error('CAPTCHA verification failed:', data.error);
+      alert('Security check failed. Please try again.');
     }
   } catch (err) {
     console.error('CAPTCHA verification error:', err);
+    alert('Error verifying security check. Please refresh and try again.');
   }
 }
 
