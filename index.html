@@ -619,6 +619,7 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
             <input type="text" id="whitelist_add_input" placeholder="enter discord id" style="flex:1;padding:8px 12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);outline:none;transition:border-color 0.2s;font-family:'Geist Mono',monospace" onfocus="this.style.borderColor='rgba(255,255,255,0.3)'" onblur="this.style.borderColor='var(--border)'">
             <button onclick="add_to_whitelist()" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#e5e5e5;cursor:pointer;transition:all 0.2s">add</button>
           </div>
+          <input type="text" id="whitelist_search" placeholder="search whitelist by discord id..." style="width:100%;padding:8px 12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);outline:none;transition:border-color 0.2s;font-family:'Geist Mono',monospace;margin-bottom:12px" oninput="filter_whitelist(this.value)" onfocus="this.style.borderColor='rgba(255,255,255,0.3)'" onblur="this.style.borderColor='var(--border)'">
           <div id="whitelist_list" style="display:flex;flex-direction:column;gap:6px"></div>
         </div>
         <div class="mp_search_wrap" style="margin-bottom:14px">
@@ -1253,29 +1254,48 @@ async function import_configs(input) {
   input.value = "";
 }
 
+let whitelistData = [];
+
 async function load_whitelist() {
   try {
     const data = await api_get("/admin/whitelist");
     if (!data.success) return;
     
-    const list = document.getElementById("whitelist_list");
-    list.innerHTML = "";
-    
-    data.whitelist.users.forEach(discordId => {
-      const item = document.createElement("div");
-      item.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px";
-      
-      const isAdmin = discordId === data.whitelist.admin;
-      
-      item.innerHTML = `
-        <span style="font-size:12px;color:var(--muted2);font-family:'Geist Mono',monospace">${esc(discordId)}${isAdmin ? ' <span style="color:#e5e5e5">(admin)</span>' : ''}</span>
-        ${!isAdmin ? `<button onclick="remove_from_whitelist('${esc(discordId)}')" style="padding:4px 10px;border-radius:6px;font-size:11px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);color:#f87171;cursor:pointer;transition:all 0.2s">remove</button>` : ''}
-      `;
-      list.appendChild(item);
-    });
+    whitelistData = data.whitelist;
+    render_whitelist(whitelistData);
   } catch (err) {
     console.error("Failed to load whitelist:", err);
   }
+}
+
+function render_whitelist(whitelist) {
+  const list = document.getElementById("whitelist_list");
+  list.innerHTML = "";
+  
+  whitelist.forEach(row => {
+    const discordId = row.discord_id;
+    const item = document.createElement("div");
+    item.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px";
+    
+    const isAdmin = discordId === whitelist.admin;
+    
+    item.innerHTML = `
+      <span style="font-size:12px;color:var(--muted2);font-family:'Geist Mono',monospace">${esc(discordId)}${isAdmin ? ' <span style="color:#e5e5e5">(admin)</span>' : ''}</span>
+      ${!isAdmin ? `<button onclick="remove_from_whitelist('${esc(discordId)}')" style="padding:4px 10px;border-radius:6px;font-size:11px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);color:#f87171;cursor:pointer;transition:all 0.2s">remove</button>` : ''}
+    `;
+    list.appendChild(item);
+  });
+}
+
+function filter_whitelist(search) {
+  if (!search) {
+    render_whitelist(whitelistData);
+    return;
+  }
+  const filtered = whitelistData.filter(row => 
+    row.discord_id.toLowerCase().includes(search.toLowerCase())
+  );
+  render_whitelist(filtered);
 }
 
 async function add_to_whitelist() {
