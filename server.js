@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1497815572015218871';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'JnvjqcBpMF7tMqDoQzUxv4Soifu9lDjz';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'patience-secret-key-change-in-production';
+const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || '';
 const ADMIN_IDS = ['903808042355806239', '586722125289619482'];
 
 // MySQL Connection - uses Railway's MYSQL_URL
@@ -411,6 +412,41 @@ app.post('/api/tabs/set', async (req, res) => {
   console.log('Setting active tab:', name);
   
   res.json({ success: true });
+});
+
+// API: Verify Turnstile token
+app.post('/api/turnstile/verify', async (req, res) => {
+  const { token } = req.body;
+  
+  if (!token) {
+    return res.status(400).json({ success: false, error: 'Token required' });
+  }
+  
+  if (!TURNSTILE_SECRET_KEY) {
+    // If no secret key configured, skip verification (for development)
+    return res.json({ success: true });
+  }
+  
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `secret=${encodeURIComponent(TURNSTILE_SECRET_KEY)}&response=${encodeURIComponent(token)}`,
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      res.json({ success: true });
+    } else {
+      res.status(400).json({ success: false, error: 'Verification failed' });
+    }
+  } catch (err) {
+    console.error('Turnstile verification error:', err);
+    res.status(500).json({ success: false, error: 'Verification error' });
+  }
 });
 
 // API: Get tabs

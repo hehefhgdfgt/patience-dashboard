@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>coach.fun</title>
 <link href="css/css2" rel="stylesheet">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -368,7 +369,8 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
     <p class="hero_sub">enhance your experience and easily manage your configs fully in the cloud with the best da hood lua script.</p>
     <div class="hero_btns">
       <a href="https://discord.gg/coachcc" target="_blank" class="btn_primary">purchase access</a>
-      <a href="/auth/discord" class="btn_secondary">dashboard</a>
+      <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-callback="onTurnstileSuccess"></div>
+      <a href="/auth/discord" id="dashboard-btn" class="btn_secondary" style="opacity: 0.5; pointer-events: none;">dashboard</a>
     </div>
   </section>
   <div class="section_divider"></div>
@@ -603,6 +605,47 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
 <script>
 const API_BASE = "/api";
+
+let turnstileToken = null;
+
+function onTurnstileSuccess(token) {
+  turnstileToken = token;
+  const dashboardBtn = document.getElementById('dashboard-btn');
+  if (dashboardBtn) {
+    dashboardBtn.style.opacity = '1';
+    dashboardBtn.style.pointerEvents = 'auto';
+    dashboardBtn.onclick = async (e) => {
+      e.preventDefault();
+      await verifyAndRedirect();
+    };
+  }
+}
+
+async function verifyAndRedirect() {
+  if (!turnstileToken) {
+    show_toast('Please complete the CAPTCHA', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/turnstile/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: turnstileToken })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      window.location.href = '/auth/discord';
+    } else {
+      show_toast('CAPTCHA verification failed', 'error');
+    }
+  } catch (err) {
+    console.error('Verification error:', err);
+    show_toast('Verification error', 'error');
+  }
+}
 
 
 const SHIELD_SVG = `<svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`;
