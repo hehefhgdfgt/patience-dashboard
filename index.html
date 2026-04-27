@@ -520,7 +520,6 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
           <div id="dash_avatar_fallback" class="ide_avatar_fallback"></div>
           <span class="ide_user_info" id="dash_display_name"></span>
         </div>
-        <button class="ide_kill_btn" onclick="kill_config()">kill config</button>
       </div>
     </div>
 
@@ -1343,6 +1342,7 @@ async function add_tab() {
   console.log('Tab added to local tabs array');
   await api_post("/tabs/save",{name,code:defaultConfig});
   console.log('Tab saved to server');
+  render_file_tree();
   render_tabs(name); if(editor_ready){editor.setValue(defaultConfig);set_dirty(false);} active_tab=name;
   console.log('Tab rendered and activated');
 }
@@ -1479,10 +1479,6 @@ function switch_panel(panel) {
   }
 }
 
-function kill_config() {
-  if(!confirm("Are you sure you want to kill the current config?"))return;
-  show_toast("Config killed","success");
-}
 
 function add_new_script() {
   add_tab();
