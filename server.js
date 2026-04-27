@@ -149,12 +149,12 @@ app.use(express.json());
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Allow uninitialized sessions
   cookie: {
-    secure: true, // Always true for Railway (HTTPS)
-    sameSite: 'none', // Required for HTTPS
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    httpOnly: true
+    secure: false, // Try false first
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000,
+    httpOnly: false
   },
   name: 'coachtopia.sid'
 }));
