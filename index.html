@@ -934,8 +934,169 @@ async function enter_dashboard() {
       if (!editor_ready) init_monaco(tabs[0].code);
       else { editor.setValue(tabs[0].code); set_dirty(false); }
     } else {
-      // Default config if no tabs exist (obfuscated)
-      const defaultConfig = `shared.coach={Binds={["Silent Aim"]={"C","Toggle"},["Aim Assist"]={"X","Toggle"},["Triggerbot"]={"V","Toggle"},["Macro"]={"S","Hold"}},["Target Mode"]={Mode="Target"},Fov={Enabled=true,Visible=true,Size=11150,Color=Color3.fromRGB(255,255,255)},["Silent Aim"]={Enabled=true,["Force Hit"]=true,Hitpart={"Head","HumanoidRootPart"},["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=false,["[TacticalShotgun]"]=true}},["Double Tap"]={Enabled=false,Weapons={"[Revolver]","[Silencer]"}},["Aim Assist"]={Enabled=true,Hitpart={"Head","HumanoidRootPart"},Smoothing=0.5,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Triggerbot={Enabled=true,Delay=0.01,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Checks={Visible=true,Dead=true},["Distance Check"]={Enabled=true,["Max Distance"]=300},["Tool Modifications"]={["Hitbox Expander"]={Enabled=true,Weapons={["[Revolver]"]={X=5,Y=2,Z=5},["[Double-Barrel SG]"]={X=5,Y=2,Z=5},["[TacticalShotgun]"]={X=5,Y=2,Z=5}}},["Spread Modification"]={Enabled=true,Shotguns={["Double-Barrel SG"]={Min=0.67,Max=0.8},TacticalShotgun={Min=0.7,Max=0.8},DrumShotgun={Min=0.64,Max=0.8}}},Delay={Enabled=true,Weapons={["Double-Barrel SG"]={Min=0,Max=0},Revolver={Min=0,Max=0},TacticalShotgun={Min=0,Max=0}}}},["Skin Changer"]={Enabled=true,Skins={["[Double-Barrel SG]"]="Galaxy",["[Revolver]"]="Galaxy",["[TacticalShotgun]"]="Galaxy",["[Knife]"]="Love Kukri"}},Visuals={Enabled=true,Type="Display",Name={Enabled=true,Color=Color3.fromRGB(255,255,255),Position="Bottom"}},["No Jump Cooldown"]={Enabled=true}}`;
+      // Default config if no tabs exist
+      const defaultConfig = `shared.coach = {
+    ['Binds'] = {
+        ['Silent Aim'] = { 'C', 'Toggle' },
+        ['Aim Assist'] = { 'X', 'Toggle' },
+        ['Triggerbot'] = { 'V', 'Toggle' },
+        ['Macro'] = { 'S', 'Hold' }
+    },
+
+    ['Target Mode'] = {
+        ['Mode'] = 'Target',
+    },
+
+    ['Fov'] = {
+        ['Enabled'] = true,
+        ['Visible'] = true,
+        ['Size'] = 11150,
+        ['Color'] = Color3.fromRGB(255, 255, 255),
+    },
+
+    ['Silent Aim'] = {
+        ['Enabled'] = true,
+		['Force Hit'] = true,
+        ['Hitpart'] = {
+            'Head',
+            'HumanoidRootPart'
+        },
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = false,
+        	['[TacticalShotgun]'] = true,
+        },
+	},
+
+	['Double Tap'] = {
+		['Enabled'] = false,
+		['Weapons'] = {
+			'[Revolver]',
+			'[Silencer]'
+		},
+	},
+
+    ['Aim Assist'] = {
+        ['Enabled'] = true,
+        ['Hitpart'] = {
+            'Head',
+            'HumanoidRootPart'
+        },
+        ["Smoothing"] = 0.5,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        }
+    },
+    ['Triggerbot'] = {
+        ['Enabled'] = true,
+        ['Delay'] = 0.01,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        },
+	},
+    
+    ['Checks'] = {
+        ['Visible'] = true,
+        ['Dead'] = true
+    },
+
+    ['Distance Check'] = {
+        ['Enabled'] = true,
+        ['Max Distance'] = 300,
+    },  
+
+	['Tool Modifications'] = {
+        ['Hitbox Expander'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+                ['[Revolver]'] = {
+                    ['X'] = 5,
+                    ['Y'] = 2,
+                    ['Z'] = 5,
+                },
+
+                ['[Double-Barrel SG]'] = {
+                    ['X'] = 5,
+                    ['Y'] = 2,
+                    ['Z'] = 5,
+                },
+
+                ['[TacticalShotgun]'] = {
+                    ['X'] = 5,
+                    ['Y'] = 2,
+                    ['Z'] = 5,
+                },
+            },
+        },
+
+        ['Spread Modification'] = {
+            ['Enabled'] = true,
+    
+            ['Shotguns'] = {
+                ['Double-Barrel SG'] = {
+                    ['Min'] = 0.67,
+                    ['Max'] = 0.80,
+                },
+
+                ['TacticalShotgun'] = {
+                    ['Min'] = 0.70,
+                    ['Max'] = 0.80,
+                },
+
+                ['DrumShotgun'] = {
+                    ['Min'] = 0.64,
+                    ['Max'] = 0.80,
+                },
+            },
+        },
+
+        ['Delay'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+
+                ['Double-Barrel SG'] = {
+                    ['Min'] = 0,
+                    ['Max'] = 0,
+                },
+                ['Revolver'] = {
+                    ['Min'] = 0,
+                    ['Max'] = 0,
+                },
+                ['TacticalShotgun'] = {
+                    ['Min'] = 0,
+                    ['Max'] = 0,
+                },
+            },
+        },
+    },
+    ['Skin Changer'] = {
+        ['Enabled'] = true,
+        ['Skins'] = {
+            ['[Double-Barrel SG]'] = 'Galaxy',
+            ['[Revolver]'] = 'Galaxy',
+            ['[TacticalShotgun]'] = 'Galaxy',
+            ['[Knife]'] = 'Love Kukri',
+        },
+    },
+
+    ['Visuals'] = {
+        ['Enabled'] = true,
+        ['Type'] = 'Display',
+        ['Name'] = {
+            ['Enabled'] = true,
+            ['Color'] = Color3.fromRGB(255, 255, 255),
+            ['Position'] = 'Bottom',
+        },
+    },
+
+    ['No Jump Cooldown'] = {
+        ['Enabled'] = true,
+    },
+}`;
       tabs = [{ name:"config", code:defaultConfig }];
       active_tab = "config";
       render_tabs(active_tab);
@@ -944,8 +1105,169 @@ async function enter_dashboard() {
     }
   } catch(e) {
     console.error('Error loading tabs:', e);
-    // Fallback to default config (obfuscated)
-    const defaultConfig = `shared.coach={Binds={["Silent Aim"]={"C","Toggle"},["Aim Assist"]={"X","Toggle"},["Triggerbot"]={"V","Toggle"},["Macro"]={"S","Hold"}},["Target Mode"]={Mode="Target"},Fov={Enabled=true,Visible=true,Size=11150,Color=Color3.fromRGB(255,255,255)},["Silent Aim"]={Enabled=true,["Force Hit"]=true,Hitpart={"Head","HumanoidRootPart"},["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=false,["[TacticalShotgun]"]=true}},["Double Tap"]={Enabled=false,Weapons={"[Revolver]","[Silencer]"}},["Aim Assist"]={Enabled=true,Hitpart={"Head","HumanoidRootPart"},Smoothing=0.5,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Triggerbot={Enabled=true,Delay=0.01,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Checks={Visible=true,Dead=true},["Distance Check"]={Enabled=true,["Max Distance"]=300},["Tool Modifications"]={["Hitbox Expander"]={Enabled=true,Weapons={["[Revolver]"]={X=5,Y=2,Z=5},["[Double-Barrel SG]"]={X=5,Y=2,Z=5},["[TacticalShotgun]"]={X=5,Y=2,Z=5}}},["Spread Modification"]={Enabled=true,Shotguns={["Double-Barrel SG"]={Min=0.67,Max=0.8},TacticalShotgun={Min=0.7,Max=0.8},DrumShotgun={Min=0.64,Max=0.8}}},Delay={Enabled=true,Weapons={["Double-Barrel SG"]={Min=0,Max=0},Revolver={Min=0,Max=0},TacticalShotgun={Min=0,Max=0}}}},["Skin Changer"]={Enabled=true,Skins={["[Double-Barrel SG]"]="Galaxy",["[Revolver]"]="Galaxy",["[TacticalShotgun]"]="Galaxy",["[Knife]"]="Love Kukri"}},Visuals={Enabled=true,Type="Display",Name={Enabled=true,Color=Color3.fromRGB(255,255,255),Position="Bottom"}},["No Jump Cooldown"]={Enabled=true}}`;
+    // Fallback to default config
+    const defaultConfig = `shared.coach = {
+    ['Binds'] = {
+        ['Silent Aim'] = { 'C', 'Toggle' },
+        ['Aim Assist'] = { 'X', 'Toggle' },
+        ['Triggerbot'] = { 'V', 'Toggle' },
+        ['Macro'] = { 'S', 'Hold' }
+    },
+
+    ['Target Mode'] = {
+        ['Mode'] = 'Target',
+    },
+
+    ['Fov'] = {
+        ['Enabled'] = true,
+        ['Visible'] = true,
+        ['Size'] = 11150,
+        ['Color'] = Color3.fromRGB(255, 255, 255),
+    },
+
+    ['Silent Aim'] = {
+        ['Enabled'] = true,
+        ['Force Hit'] = true,
+        ['Hitpart'] = {
+            'Head',
+            'HumanoidRootPart'
+        },
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = false,
+            ['[TacticalShotgun]'] = true,
+        },
+    },
+
+    ['Double Tap'] = {
+        ['Enabled'] = false,
+        ['Weapons'] = {
+            '[Revolver]',
+            '[Silencer]'
+        },
+    },
+
+    ['Aim Assist'] = {
+        ['Enabled'] = true,
+        ['Hitpart'] = {
+            'Head',
+            'HumanoidRootPart'
+        },
+        ["Smoothing"] = 0.5,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        }
+    },
+    ['Triggerbot'] = {
+        ['Enabled'] = true,
+        ['Delay'] = 0.01,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        },
+    },
+
+    ['Checks'] = {
+        ['Visible'] = true,
+        ['Dead'] = true
+    },
+
+    ['Distance Check'] = {
+        ['Enabled'] = true,
+        ['Max Distance'] = 300,
+    },  
+
+    ['Tool Modifications'] = {
+        ['Hitbox Expander'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+                ['[Revolver]'] = {
+                    ['X'] = 5,
+                    ['Y'] = 2,
+                    ['Z'] = 5,
+                },
+
+                ['[Double-Barrel SG]'] = {
+                    ['X'] = 5,
+                    ['Y'] = 2,
+                    ['Z'] = 5,
+                },
+
+                ['[TacticalShotgun]'] = {
+                    ['X'] = 5,
+                    ['Y'] = 2,
+                    ['Z'] = 5,
+                },
+            },
+        },
+
+        ['Spread Modification'] = {
+            ['Enabled'] = true,
+
+            ['Shotguns'] = {
+                ['Double-Barrel SG'] = {
+                    ['Min'] = 0.67,
+                    ['Max'] = 0.80,
+                },
+
+                ['TacticalShotgun'] = {
+                    ['Min'] = 0.70,
+                    ['Max'] = 0.80,
+                },
+
+                ['DrumShotgun'] = {
+                    ['Min'] = 0.64,
+                    ['Max'] = 0.80,
+                },
+            },
+        },
+
+        ['Delay'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+
+                ['Double-Barrel SG'] = {
+                    ['Min'] = 0,
+                    ['Max'] = 0,
+                },
+                ['Revolver'] = {
+                    ['Min'] = 0,
+                    ['Max'] = 0,
+                },
+                ['TacticalShotgun'] = {
+                    ['Min'] = 0,
+                    ['Max'] = 0,
+                },
+            },
+        },
+    },
+    ['Skin Changer'] = {
+        ['Enabled'] = true,
+        ['Skins'] = {
+            ['[Double-Barrel SG]'] = 'Galaxy',
+            ['[Revolver]'] = 'Galaxy',
+            ['[TacticalShotgun]'] = 'Galaxy',
+            ['[Knife]'] = 'Love Kukri',
+        },
+    },
+
+    ['Visuals'] = {
+        ['Enabled'] = true,
+        ['Type'] = 'Display',
+        ['Name'] = {
+            ['Enabled'] = true,
+            ['Color'] = Color3.fromRGB(255, 255, 255),
+            ['Position'] = 'Bottom',
+        },
+    },
+
+    ['No Jump Cooldown'] = {
+        ['Enabled'] = true,
+    },
+}`;
     tabs = [{ name:"config", code:defaultConfig }];
     active_tab = "config";
     render_tabs(active_tab);
@@ -1002,7 +1324,101 @@ async function add_tab() {
     return;
   }
   console.log('Creating new tab:', name);
-  const defaultConfig = `shared.coach={Binds={["Silent Aim"]={"C","Toggle"},["Aim Assist"]={"X","Toggle"},["Triggerbot"]={"V","Toggle"},["Macro"]={"S","Hold"}},["Target Mode"]={Mode="Target"},Fov={Enabled=true,Visible=true,Size=11150,Color=Color3.fromRGB(255,255,255)},["Silent Aim"]={Enabled=true,["Force Hit"]=true,Hitpart={"Head","HumanoidRootPart"},["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=false,["[TacticalShotgun]"]=true}},["Double Tap"]={Enabled=false,Weapons={"[Revolver]","[Silencer]"}},["Aim Assist"]={Enabled=true,Hitpart={"Head","HumanoidRootPart"},Smoothing=0.5,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Triggerbot={Enabled=true,Delay=0.01,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Checks={Visible=true,Dead=true},["Distance Check"]={Enabled=true,["Max Distance"]=300},["Tool Modifications"]={["Hitbox Expander"]={Enabled=true,Weapons={["[Revolver]"]={X=5,Y=2,Z=5},["[Double-Barrel SG]"]={X=5,Y=2,Z=5},["[TacticalShotgun]"]={X=5,Y=2,Z=5}}},["Spread Modification"]={Enabled=true,Shotguns={["Double-Barrel SG"]={Min=0.67,Max=0.8},TacticalShotgun={Min=0.7,Max=0.8},DrumShotgun={Min=0.64,Max=0.8}}},Delay={Enabled=true,Weapons={["Double-Barrel SG"]={Min=0,Max=0},Revolver={Min=0,Max=0},TacticalShotgun={Min=0,Max=0}}}},["Skin Changer"]={Enabled=true,Skins={["[Double-Barrel SG]"]="Galaxy",["[Revolver]"]="Galaxy",["[TacticalShotgun]"]="Galaxy",["[Knife]"]="Love Kukri"}},Visuals={Enabled=true,Type="Display",Name={Enabled=true,Color=Color3.fromRGB(255,255,255),Position="Bottom"}},["No Jump Cooldown"]={Enabled=true}}`;
+  const defaultConfig = `shared.coach = {
+    ['Binds'] = {
+        ['Silent Aim'] = { 'C', 'Toggle' },
+        ['Aim Assist'] = { 'X', 'Toggle' },
+        ['Triggerbot'] = { 'V', 'Toggle' },
+        ['Macro'] = { 'S', 'Hold' }
+    },
+    ['Target Mode'] = { ['Mode'] = 'Target' },
+    ['Fov'] = {
+        ['Enabled'] = true,
+        ['Visible'] = true,
+        ['Size'] = 11150,
+        ['Color'] = Color3.fromRGB(255, 255, 255),
+    },
+    ['Silent Aim'] = {
+        ['Enabled'] = true,
+        ['Force Hit'] = true,
+        ['Hitpart'] = { 'Head', 'HumanoidRootPart' },
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = false,
+            ['[TacticalShotgun]'] = true,
+        },
+    },
+    ['Double Tap'] = {
+        ['Enabled'] = false,
+        ['Weapons'] = { '[Revolver]', '[Silencer]' },
+    },
+    ['Aim Assist'] = {
+        ['Enabled'] = true,
+        ['Hitpart'] = { 'Head', 'HumanoidRootPart' },
+        ["Smoothing"] = 0.5,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        }
+    },
+    ['Triggerbot'] = {
+        ['Enabled'] = true,
+        ['Delay'] = 0.01,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        },
+    },
+    ['Checks'] = { ['Visible'] = true, ['Dead'] = true },
+    ['Distance Check'] = { ['Enabled'] = true, ['Max Distance'] = 300 },
+    ['Tool Modifications'] = {
+        ['Hitbox Expander'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+                ['[Revolver]'] = { ['X'] = 5, ['Y'] = 2, ['Z'] = 5 },
+                ['[Double-Barrel SG]'] = { ['X'] = 5, ['Y'] = 2, ['Z'] = 5 },
+                ['[TacticalShotgun]'] = { ['X'] = 5, ['Y'] = 2, ['Z'] = 5 },
+            },
+        },
+        ['Spread Modification'] = {
+            ['Enabled'] = true,
+            ['Shotguns'] = {
+                ['Double-Barrel SG'] = { ['Min'] = 0.67, ['Max'] = 0.80 },
+                ['TacticalShotgun'] = { ['Min'] = 0.70, ['Max'] = 0.80 },
+                ['DrumShotgun'] = { ['Min'] = 0.64, ['Max'] = 0.80 },
+            },
+        },
+        ['Delay'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+                ['Double-Barrel SG]'] = { ['Min'] = 0, ['Max'] = 0 },
+                ['Revolver'] = { ['Min'] = 0, ['Max'] = 0 },
+                ['TacticalShotgun'] = { ['Min'] = 0, ['Max'] = 0 },
+            },
+        },
+    },
+    ['Skin Changer'] = {
+        ['Enabled'] = true,
+        ['Skins'] = {
+            ['[Double-Barrel SG]'] = 'Galaxy',
+            ['[Revolver]'] = 'Galaxy',
+            ['[TacticalShotgun]'] = 'Galaxy',
+            ['[Knife]'] = 'Love Kukri',
+        },
+    },
+    ['Visuals'] = {
+        ['Enabled'] = true,
+        ['Type'] = 'Display',
+        ['Name'] = {
+            ['Enabled'] = true,
+            ['Color'] = Color3.fromRGB(255, 255, 255),
+            ['Position'] = 'Bottom',
+        },
+    },
+    ['No Jump Cooldown'] = { ['Enabled'] = true },
+}`;
   console.log('Default config length:', defaultConfig.length);
   console.log('Default config preview:', defaultConfig.substring(0, 200));
   tabs.push({name,code:defaultConfig});
@@ -1058,17 +1474,111 @@ async function do_set() {
   }
   
   const data=await api_post("/tabs/set",{name:active_tab});
-  if(data.success){selected_tab=active_tab;render_tabs(active_tab);update_selected_btn();}
 }
+
 async function do_reset() {
-  if(!active_tab) return;
-  if(!confirm(`Reset "${active_tab}" to default?`)) return;
-  const defaultConfig = `shared.coach={Binds={["Silent Aim"]={"C","Toggle"},["Aim Assist"]={"X","Toggle"},["Triggerbot"]={"V","Toggle"},["Macro"]={"S","Hold"}},["Target Mode"]={Mode="Target"},Fov={Enabled=true,Visible=true,Size=11150,Color=Color3.fromRGB(255,255,255)},["Silent Aim"]={Enabled=true,["Force Hit"]=true,Hitpart={"Head","HumanoidRootPart"},["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=false,["[TacticalShotgun]"]=true}},["Double Tap"]={Enabled=false,Weapons={"[Revolver]","[Silencer]"}},["Aim Assist"]={Enabled=true,Hitpart={"Head","HumanoidRootPart"},Smoothing=0.5,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Triggerbot={Enabled=true,Delay=0.01,["Weapon Configuration"]={["[Double-Barrel SG]"]=true,["[Revolver]"]=true,["[TacticalShotgun]"]=true}},Checks={Visible=true,Dead=true},["Distance Check"]={Enabled=true,["Max Distance"]=300},["Tool Modifications"]={["Hitbox Expander"]={Enabled=true,Weapons={["[Revolver]"]={X=5,Y=2,Z=5},["[Double-Barrel SG]"]={X=5,Y=2,Z=5},["[TacticalShotgun]"]={X=5,Y=2,Z=5}}},["Spread Modification"]={Enabled=true,Shotguns={["Double-Barrel SG"]={Min=0.67,Max=0.8},TacticalShotgun={Min=0.7,Max=0.8},DrumShotgun={Min=0.64,Max=0.8}}},Delay={Enabled=true,Weapons={["Double-Barrel SG"]={Min=0,Max=0},Revolver={Min=0,Max=0},TacticalShotgun={Min=0,Max=0}}}},["Skin Changer"]={Enabled=true,Skins={["[Double-Barrel SG]"]="Galaxy",["[Revolver]"]="Galaxy",["[TacticalShotgun]"]="Galaxy",["[Knife]"]="Love Kukri"}},Visuals={Enabled=true,Type="Display",Name={Enabled=true,Color=Color3.fromRGB(255,255,255),Position="Bottom"}},["No Jump Cooldown"]={Enabled=true}}`;
-  const t = tabs.find(t=>t.name===active_tab);
-  if(t) t.code = defaultConfig;
-  if(editor_ready) { editor.setValue(defaultConfig); set_dirty(true); }
+  if (!active_tab) return;
+  if (!confirm(`Reset "${active_tab}" to default?`)) return;
+  const defaultConfig = `shared.coach = {
+    ['Binds'] = {
+        ['Silent Aim'] = { 'C', 'Toggle' },
+        ['Aim Assist'] = { 'X', 'Toggle' },
+        ['Triggerbot'] = { 'V', 'Toggle' },
+        ['Macro'] = { 'S', 'Hold' }
+    },
+    ['Target Mode'] = { ['Mode'] = 'Target' },
+    ['Fov'] = {
+        ['Enabled'] = true,
+        ['Visible'] = true,
+        ['Size'] = 11150,
+        ['Color'] = Color3.fromRGB(255, 255, 255),
+    },
+    ['Silent Aim'] = {
+        ['Enabled'] = true,
+        ['Force Hit'] = true,
+        ['Hitpart'] = { 'Head', 'HumanoidRootPart' },
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = false,
+            ['[TacticalShotgun]'] = true,
+        },
+    },
+    ['Double Tap'] = {
+        ['Enabled'] = false,
+        ['Weapons'] = { '[Revolver]', '[Silencer]' },
+    },
+    ['Aim Assist'] = {
+        ['Enabled'] = true,
+        ['Hitpart'] = { 'Head', 'HumanoidRootPart' },
+        ["Smoothing"] = 0.5,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        }
+    },
+    ['Triggerbot'] = {
+        ['Enabled'] = true,
+        ['Delay'] = 0.01,
+        ['Weapon Configuration'] = {
+            ['[Double-Barrel SG]'] = true,
+            ['[Revolver]'] = true,
+            ['[TacticalShotgun]'] = true,
+        },
+    },
+    ['Checks'] = { ['Visible'] = true, ['Dead'] = true },
+    ['Distance Check'] = { ['Enabled'] = true, ['Max Distance'] = 300 },
+    ['Tool Modifications'] = {
+        ['Hitbox Expander'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+                ['[Revolver]'] = { ['X'] = 5, ['Y'] = 2, ['Z'] = 5 },
+                ['[Double-Barrel SG]'] = { ['X'] = 5, ['Y'] = 2, ['Z'] = 5 },
+                ['[TacticalShotgun]'] = { ['X'] = 5, ['Y'] = 2, ['Z'] = 5 },
+            },
+        },
+        ['Spread Modification'] = {
+            ['Enabled'] = true,
+            ['Shotguns'] = {
+                ['Double-Barrel SG'] = { ['Min'] = 0.67, ['Max'] = 0.80 },
+                ['TacticalShotgun'] = { ['Min'] = 0.70, ['Max'] = 0.80 },
+                ['DrumShotgun'] = { ['Min'] = 0.64, ['Max'] = 0.80 },
+            },
+        },
+        ['Delay'] = {
+            ['Enabled'] = true,
+            ['Weapons'] = {
+                ['Double-Barrel SG]'] = { ['Min'] = 0, ['Max'] = 0 },
+                ['Revolver'] = { ['Min'] = 0, ['Max'] = 0 },
+                ['TacticalShotgun'] = { ['Min'] = 0, ['Max'] = 0 },
+            },
+        },
+    },
+    ['Skin Changer'] = {
+        ['Enabled'] = true,
+        ['Skins'] = {
+            ['[Double-Barrel SG]'] = 'Galaxy',
+            ['[Revolver]'] = 'Galaxy',
+            ['[TacticalShotgun]'] = 'Galaxy',
+            ['[Knife]'] = 'Love Kukri',
+        },
+    },
+    ['Visuals'] = {
+        ['Enabled'] = true,
+        ['Type'] = 'Display',
+        ['Name'] = {
+            ['Enabled'] = true,
+            ['Color'] = Color3.fromRGB(255, 255, 255),
+            ['Position'] = 'Bottom',
+        },
+    },
+    ['No Jump Cooldown'] = { ['Enabled'] = true },
+}`;
+  const t = tabs.find(t => t.name === active_tab);
+  if (t) t.code = defaultConfig;
+  if (editor_ready) { editor.setValue(defaultConfig); set_dirty(true); }
   await do_save();
-  show_toast(`${active_tab} reset to default`,`success`);
+  show_toast(`${active_tab} reset to default`, `success`);
 }
 function update_selected_btn() {
   const btn=document.getElementById("selected_cfg_btn"); if(!btn) return;
