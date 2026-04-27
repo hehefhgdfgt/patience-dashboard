@@ -1033,6 +1033,7 @@ async function do_save(silent=false) {
   catch{ if(!silent)show_toast("could not reach server","error"); }
 }
 async function do_set() {
+  alert("do_set called! active_tab: " + active_tab);
   if(!active_tab) return;
   await do_save();
   
