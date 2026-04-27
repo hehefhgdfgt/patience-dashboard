@@ -686,6 +686,14 @@ app.get('/api/commands/pending', async (req, res) => {
   }
 });
 
+// API: Get client IP for debugging
+app.get('/api/myip', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  const clientIP = getClientIP(req);
+  console.log(`[MYIP] IP check from: ${clientIP}`);
+  res.json({ success: true, ip: clientIP });
+});
+
 // API: Mark command as executed (Roblox calls this after execution)
 app.post('/api/commands/:name/executed', async (req, res) => {
   // Add CORS headers
