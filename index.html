@@ -1132,19 +1132,6 @@ function make_av_fallback(n) { const el=document.createElement("div"); el.classN
 
 function render_tabs(activate) {
   console.log('render_tabs called with activate:', activate, 'active_tab:', active_tab);
-  const bar = document.getElementById("tabs_bar"); bar.innerHTML="";
-  tabs.forEach(t => {
-    const el = document.createElement("button");
-    const isActive = t.name===activate;
-    el.className = "ide_tab"+(isActive?" active":"");
-    el.dataset.name = t.name;
-    el.innerHTML = `<span>${esc(t.name)}</span><span class="ide_tab_close" onclick="event.stopPropagation();delete_tab('${esc(t.name)}')">&times;</span>`;
-    el.addEventListener("click", () => switch_tab(t.name));
-    bar.appendChild(el);
-    console.log('Tab rendered:', t.name, 'is active:', isActive, 'class:', el.className);
-  });
-  const add = document.createElement("button"); add.className="ide_tab_add"; add.textContent="+"; add.onclick=add_tab;
-  bar.appendChild(add);
   render_file_tree();
   if (activate) active_tab = activate;
   console.log('render_tabs complete, active_tab is now:', active_tab);
