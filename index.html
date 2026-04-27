@@ -952,7 +952,7 @@ async function do_save(silent=false) {
 async function do_set() {
   if(!active_tab) return; await do_save();
   const data=await api_post("/tabs/set",{name:active_tab});
-  if(data.success){selected_tab=active_tab;render_tabs(active_tab);update_selected_btn();show_toast("set as active config","success");}
+  if(data.success){selected_tab=active_tab;render_tabs(active_tab);update_selected_btn();show_toast(`${active_tab} is set`,`success`);}
   else show_toast(data.message||"failed","error");
 }
 function update_selected_btn() {
