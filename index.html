@@ -327,6 +327,17 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 .settings_header{margin-bottom:24px}
 .settings_header h2{font-size:20px;font-weight:600;color:var(--text)}
 .settings_content{max-width:600px}
+.settings_section{margin-bottom:32px}
+.settings_section h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;text-transform:lowercase}
+.setting_row{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.setting_row label{font-size:13px;color:var(--muted);min-width:80px}
+.setting_row input[type="range"]{flex:1;max-width:200px;height:6px;-webkit-appearance:none;appearance:none;background:var(--bg3);border-radius:3px;outline:none}
+.setting_row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer}
+.setting_row span{font-size:13px;color:var(--muted2);min-width:40px}
+.settings_btn{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;background:var(--bg3);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all 0.2s}
+.settings_btn:hover{background:var(--bg4);border-color:var(--border2)}
+.settings_btn.logout_btn{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171}
+.settings_btn.logout_btn:hover{background:rgba(248,113,113,0.2)}
 
 /* Admin Panel */
 .ide_admin_layout{flex:1;overflow-y:auto;padding:28px;background:var(--bg)}
@@ -548,7 +559,33 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
         <h2>settings</h2>
       </div>
       <div class="settings_content">
-        <p style="color:var(--muted)">settings will be added here</p>
+        <!-- Editor Settings -->
+        <div class="settings_section">
+          <h3>editor</h3>
+          <div class="setting_row">
+            <label>font size</label>
+            <input type="range" id="font_size_slider" min="10" max="20" value="13" onchange="update_font_size(this.value)">
+            <span id="font_size_value">13px</span>
+          </div>
+        </div>
+
+        <!-- Data Settings -->
+        <div class="settings_section">
+          <h3>data</h3>
+          <div class="setting_row">
+            <button class="settings_btn" onclick="export_configs()">export configs</button>
+            <button class="settings_btn" onclick="document.getElementById('import_file').click()">import configs</button>
+            <input type="file" id="import_file" accept=".json" style="display:none" onchange="import_configs(this)">
+          </div>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="settings_section">
+          <h3>account</h3>
+          <div class="setting_row">
+            <button class="settings_btn logout_btn" onclick="do_logout()">logout</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1098,6 +1135,60 @@ function do_logout() {
   window.location.href="/auth/logout";
 }
 
+// Settings functions
+function update_font_size(size) {
+  document.getElementById("font_size_value").textContent = size + "px";
+  if (editor && editor_ready) {
+    editor.updateOptions({ fontSize: parseInt(size) });
+  }
+  localStorage.setItem("editor_font_size", size);
+}
+
+function export_configs() {
+  const data = { configs: tabs, exported_at: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `coach_configs_${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  show_toast("configs exported", "success");
+}
+
+async function import_configs(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    
+    if (!data.configs || !Array.isArray(data.configs)) {
+      show_toast("invalid config file", "error");
+      return;
+    }
+    
+    if (!confirm(`import ${data.configs.length} configs? this will not overwrite existing configs.`)) return;
+    
+    let imported = 0;
+    for (const config of data.configs) {
+      if (!tabs.find(t => t.name === config.name)) {
+        tabs.push(config);
+        await api_post("/tabs/save", { name: config.name, code: config.code });
+        imported++;
+      }
+    }
+    
+    render_file_tree();
+    render_tabs(active_tab);
+    show_toast(`${imported} configs imported`, "success");
+  } catch (e) {
+    show_toast("failed to import configs", "error");
+  }
+  input.value = "";
+}
+
 async function load_whitelist() {
   try {
     const data = await api_get("/admin/whitelist");
@@ -1269,13 +1360,18 @@ function init_monaco(initial_code) {
     });
     editor=monaco.editor.create(document.getElementById("editor_container"),{
       value:initial_code,language:"lua",theme:"coachDark",
-      fontSize:13,fontFamily:"'Geist Mono','JetBrains Mono','Fira Code','Consolas',monospace",
+      fontSize:parseInt(localStorage.getItem("editor_font_size")||"13"),
+      fontFamily:"'Geist Mono','JetBrains Mono','Fira Code','Consolas',monospace",
       fontLigatures:true,minimap:{enabled:true,scale:1,renderCharacters:false},
       scrollBeyondLastLine:false,padding:{top:20,bottom:20},lineNumbers:"on",
       renderLineHighlight:"line",cursorBlinking:"smooth",cursorSmoothCaretAnimation:"on",
       smoothScrolling:true,automaticLayout:true,wordWrap:"off",tabSize:2,
       bracketPairColorization:{enabled:true},
     });
+    // Update slider to match loaded font size
+    const savedSize = localStorage.getItem("editor_font_size")||"13";
+    document.getElementById("font_size_slider").value = savedSize;
+    document.getElementById("font_size_value").textContent = savedSize + "px";
     editor.addCommand(monaco.KeyMod.CtrlCmd|monaco.KeyCode.KeyS,do_save);
     editor.onDidChangeModelContent(()=>{
       set_dirty(true); clearTimeout(window._autosave);
