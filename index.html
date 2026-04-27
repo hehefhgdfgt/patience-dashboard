@@ -603,10 +603,23 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
 <div class="toast" id="toast"></div>
 
+<!-- CAPTCHA Modal -->
+<div id="captcha-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <h2 style="color:#fff;font-size:24px;margin:0;">Security Check</h2>
+  <p style="color:#888;margin:0;">Please complete the CAPTCHA to continue</p>
+  <div class="cf-turnstile" data-sitekey="0x4AAAAAADD_MR1jNRP8YwvA" data-callback="onCaptchaSuccess"></div>
+</div>
+
 <script>
 const API_BASE = "/api";
 
 let turnstileToken = null;
+let captchaVerified = false;
+
+function onCaptchaSuccess(token) {
+  turnstileToken = token;
+  verifyCaptchaAndUnlock();
+}
 
 function onTurnstileSuccess(token) {
   turnstileToken = token;
@@ -618,6 +631,28 @@ function onTurnstileSuccess(token) {
       e.preventDefault();
       await verifyAndRedirect();
     };
+  }
+}
+
+async function verifyCaptchaAndUnlock() {
+  if (!turnstileToken) return;
+  
+  try {
+    const response = await fetch('/api/turnstile/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: turnstileToken })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      captchaVerified = true;
+      const modal = document.getElementById('captcha-modal');
+      if (modal) modal.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('CAPTCHA verification error:', err);
   }
 }
 
