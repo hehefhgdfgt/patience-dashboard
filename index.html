@@ -622,6 +622,30 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
           <input type="text" id="whitelist_search" placeholder="search whitelist by discord id..." style="width:100%;padding:8px 12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);outline:none;transition:border-color 0.2s;font-family:'Geist Mono',monospace;margin-bottom:12px" oninput="filter_whitelist(this.value)" onfocus="this.style.borderColor='rgba(255,255,255,0.3)'" onblur="this.style.borderColor='var(--border)'">
           <div id="whitelist_list" style="display:flex;flex-direction:column;gap:6px"></div>
         </div>
+        
+        <div style="margin-bottom:24px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">script management</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <input type="text" id="script_name_input" placeholder="script name" style="flex:1;padding:8px 12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);outline:none;transition:border-color 0.2s;font-family:'Geist Mono',monospace" onfocus="this.style.borderColor='rgba(255,255,255,0.3)'" onblur="this.style.borderColor='var(--border)'">
+            <button onclick="create_script()" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;cursor:pointer;transition:all 0.2s">create</button>
+          </div>
+          <div id="scripts_list" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+        
+        <div id="script_editor" style="display:none;margin-bottom:24px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">editing: <span id="editing_script_name" style="color:var(--muted2)"></span></div>
+            <button onclick="close_script_editor()" style="padding:6px 12px;border-radius:6px;font-size:11px;background:rgba(255,255,255,0.1);border:1px solid var(--border);color:var(--muted2);cursor:pointer;transition:all 0.2s">close</button>
+          </div>
+          <textarea id="script_code" placeholder="enter javascript code..." style="width:100%;height:200px;padding:12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);outline:none;resize:vertical;font-family:'Geist Mono',monospace;margin-bottom:8px" onfocus="this.style.borderColor='rgba(255,255,255,0.3)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+          <input type="text" id="script_description" placeholder="description (optional)" style="width:100%;padding:8px 12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);outline:none;font-family:'Geist Mono',monospace;margin-bottom:12px" onfocus="this.style.borderColor='rgba(255,255,255,0.3)'" onblur="this.style.borderColor='var(--border)'">
+          <div style="display:flex;gap:8px">
+            <button onclick="save_script()" style="flex:1;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;cursor:pointer;transition:all 0.2s">save</button>
+            <button onclick="execute_script()" style="flex:1;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#818cf8;cursor:pointer;transition:all 0.2s">execute</button>
+            <button onclick="delete_script()" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#f87171;cursor:pointer;transition:all 0.2s">delete</button>
+          </div>
+          <div id="script_output" style="margin-top:12px;padding:12px;border-radius:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border);font-size:12px;font-family:'Geist Mono',monospace;color:var(--muted2);display:none;white-space:pre-wrap;word-break:break-all"></div>
+        </div>
         <div class="mp_search_wrap" style="margin-bottom:14px">
           <svg class="mp_search_icon" width="15" height="15" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
           <input class="mp_search" id="admin_search" type="text" placeholder="search by name, username, discord id&hellip;" autocomplete="off">
@@ -837,8 +861,8 @@ async function do_view_pin() {
 });
 
 
-async function api_post(path, body) {
-  const res = await fetch(API_BASE+path, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+async function api_post(path, body, method = "POST") {
+  const res = await fetch(API_BASE+path, { method, headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
   return res.json();
 }
 async function api_get(path) { return (await fetch(API_BASE+path)).json(); }
@@ -1137,7 +1161,7 @@ function switch_panel(panel) {
     if(mainEl)mainEl.style.display="none";
     if(settingsEl)settingsEl.style.display="none";
     if(adminEl)adminEl.style.display="flex";
-    admin_users_page=1;load_admin_users();load_whitelist();
+    admin_users_page=1;load_admin_users();load_whitelist();load_scripts();
   }
 }
 
@@ -1255,6 +1279,7 @@ async function import_configs(input) {
 }
 
 let whitelistData = [];
+let currentEditingScript = null;
 
 async function load_whitelist() {
   try {
@@ -1296,6 +1321,155 @@ function filter_whitelist(search) {
     row.discord_id.toLowerCase().includes(search.toLowerCase())
   );
   render_whitelist(filtered);
+}
+
+async function load_scripts() {
+  try {
+    const data = await api_get("/scripts");
+    if (!data.success) return;
+    
+    render_scripts(data.scripts);
+  } catch (err) {
+    console.error("Failed to load scripts:", err);
+  }
+}
+
+function render_scripts(scripts) {
+  const list = document.getElementById("scripts_list");
+  list.innerHTML = "";
+  
+  scripts.forEach(script => {
+    const item = document.createElement("div");
+    item.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:background 0.2s";
+    item.onclick = () => edit_script(script.name);
+    
+    item.innerHTML = `
+      <div>
+        <span style="font-size:12px;color:var(--text);font-weight:500">${esc(script.name)}</span>
+        ${script.description ? `<span style="font-size:11px;color:var(--muted);margin-left:8px">${esc(script.description)}</span>` : ''}
+      </div>
+      <span style="font-size:10px;color:var(--muted2)">${new Date(script.updatedAt).toLocaleDateString()}</span>
+    `;
+    list.appendChild(item);
+  });
+}
+
+async function create_script() {
+  const input = document.getElementById("script_name_input");
+  const name = input.value.trim();
+  
+  if (!name) {
+    show_toast("Please enter a script name", "error");
+    return;
+  }
+  
+  try {
+    const data = await api_post("/scripts", { name, code: "// Your code here", description: "" });
+    if (data.success) {
+      show_toast("Script created", "success");
+      input.value = "";
+      load_scripts();
+      edit_script(name);
+    } else {
+      show_toast(data.error || "Failed to create script", "error");
+    }
+  } catch (err) {
+    console.error("Failed to create script:", err);
+    show_toast("Failed to create script", "error");
+  }
+}
+
+async function edit_script(name) {
+  try {
+    const data = await api_get(`/scripts/${encodeURIComponent(name)}`);
+    if (!data.success) {
+      show_toast("Failed to load script", "error");
+      return;
+    }
+    
+    currentEditingScript = name;
+    document.getElementById("editing_script_name").textContent = name;
+    document.getElementById("script_code").value = data.script.code;
+    document.getElementById("script_description").value = data.script.description || "";
+    document.getElementById("script_output").style.display = "none";
+    document.getElementById("script_editor").style.display = "block";
+  } catch (err) {
+    console.error("Failed to load script:", err);
+    show_toast("Failed to load script", "error");
+  }
+}
+
+function close_script_editor() {
+  document.getElementById("script_editor").style.display = "none";
+  currentEditingScript = null;
+}
+
+async function save_script() {
+  if (!currentEditingScript) return;
+  
+  const code = document.getElementById("script_code").value;
+  const description = document.getElementById("script_description").value;
+  
+  if (!code) {
+    show_toast("Code cannot be empty", "error");
+    return;
+  }
+  
+  try {
+    const data = await api_post(`/scripts/${encodeURIComponent(currentEditingScript)}`, { code, description }, "PUT");
+    if (data.success) {
+      show_toast("Script saved", "success");
+      load_scripts();
+    } else {
+      show_toast(data.error || "Failed to save script", "error");
+    }
+  } catch (err) {
+    console.error("Failed to save script:", err);
+    show_toast("Failed to save script", "error");
+  }
+}
+
+async function execute_script() {
+  if (!currentEditingScript) return;
+  
+  const outputDiv = document.getElementById("script_output");
+  outputDiv.style.display = "block";
+  outputDiv.textContent = "Executing...";
+  
+  try {
+    const data = await api_post(`/scripts/${encodeURIComponent(currentEditingScript)}/execute`, {});
+    if (data.success) {
+      outputDiv.textContent = `Output: ${data.output}`;
+      show_toast("Script executed", "success");
+    } else {
+      outputDiv.textContent = `Error: ${data.error}`;
+      show_toast("Script execution failed", "error");
+    }
+  } catch (err) {
+    console.error("Failed to execute script:", err);
+    outputDiv.textContent = `Error: ${err.message}`;
+    show_toast("Failed to execute script", "error");
+  }
+}
+
+async function delete_script() {
+  if (!currentEditingScript) return;
+  
+  if (!confirm(`Are you sure you want to delete "${currentEditingScript}"?`)) return;
+  
+  try {
+    const data = await api_post(`/scripts/${encodeURIComponent(currentEditingScript)}`, {}, "DELETE");
+    if (data.success) {
+      show_toast("Script deleted", "success");
+      close_script_editor();
+      load_scripts();
+    } else {
+      show_toast(data.error || "Failed to delete script", "error");
+    }
+  } catch (err) {
+    console.error("Failed to delete script:", err);
+    show_toast("Failed to delete script", "error");
+  }
 }
 
 async function add_to_whitelist() {

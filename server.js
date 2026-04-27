@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const mysql = require('mysql2/promise');
+const { MongoClient } = require('mongodb');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,11 @@ const ADMIN_IDS = ['903808042355806239', '586722125289619482'];
 // MySQL Connection - uses Railway's MYSQL_URL
 const MYSQL_URL = process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
 let db;
+
+// MongoDB Connection
+const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017/coachtopia';
+let mongoClient;
+let scriptsCollection;
 
 // Initialize MySQL connection (required)
 async function initDB() {
@@ -65,6 +71,26 @@ async function initDB() {
   } catch (err) {
     console.error('MySQL connection error:', err.message);
     process.exit(1);
+  }
+}
+
+// Initialize MongoDB connection
+async function initMongoDB() {
+  try {
+    mongoClient = new MongoClient(MONGODB_URL);
+    await mongoClient.connect();
+    console.log('MongoDB connected successfully');
+    
+    const db = mongoClient.db();
+    scriptsCollection = db.collection('scripts');
+    
+    // Create index on name for faster queries
+    await scriptsCollection.createIndex({ name: 1 }, { unique: true });
+    
+    console.log('MongoDB initialized');
+  } catch (err) {
+    console.error('MongoDB connection error:', err.message);
+    console.log('Continuing without MongoDB (script features will be disabled)');
   }
 }
 
@@ -379,34 +405,176 @@ app.get('/api/tabs', async (req, res) => {
   }
 });
 
-// API: Reset all configs (admin only)
-app.post('/api/admin/reset-configs', async (req, res) => {
+// API: Get all scripts (admin only)
+app.get('/api/scripts', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
-  const defaultCode = 'warn("wowzaa")';
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
   
   try {
-    // Delete all existing configs
-    await db.execute('DELETE FROM user_configs');
+    const scripts = await scriptsCollection.find({}).sort({ updatedAt: -1 }).toArray();
+    res.json({ success: true, scripts });
+  } catch (err) {
+    console.error('Error loading scripts:', err);
+    res.status(500).json({ success: false, error: 'Failed to load scripts' });
+  }
+});
+
+// API: Get single script
+app.get('/api/scripts/:name', async (req, res) => {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
+  
+  try {
+    const script = await scriptsCollection.findOne({ name: req.params.name });
+    if (!script) {
+      return res.status(404).json({ success: false, error: 'Script not found' });
+    }
+    res.json({ success: true, script });
+  } catch (err) {
+    console.error('Error loading script:', err);
+    res.status(500).json({ success: false, error: 'Failed to load script' });
+  }
+});
+
+// API: Create script
+app.post('/api/scripts', async (req, res) => {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
+  
+  const { name, code, description } = req.body;
+  
+  if (!name || !code) {
+    return res.status(400).json({ success: false, error: 'Name and code required' });
+  }
+  
+  try {
+    const script = {
+      name,
+      code,
+      description: description || '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: req.user.id
+    };
     
-    // Get all whitelisted users
-    const [whitelistRows] = await db.execute('SELECT discord_id FROM whitelist');
+    await scriptsCollection.insertOne(script);
+    res.json({ success: true, script });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, error: 'Script name already exists' });
+    }
+    console.error('Error creating script:', err);
+    res.status(500).json({ success: false, error: 'Failed to create script' });
+  }
+});
+
+// API: Update script
+app.put('/api/scripts/:name', async (req, res) => {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
+  
+  const { code, description } = req.body;
+  
+  if (!code) {
+    return res.status(400).json({ success: false, error: 'Code required' });
+  }
+  
+  try {
+    const result = await scriptsCollection.updateOne(
+      { name: req.params.name },
+      { 
+        $set: { 
+          code, 
+          description: description || '',
+          updatedAt: new Date(),
+          updatedBy: req.user.id
+        } 
+      }
+    );
     
-    // Insert default config for each user
-    for (const user of whitelistRows) {
-      await db.execute(
-        'INSERT INTO user_configs (discord_id, tab_name, code) VALUES (?, ?, ?)',
-        [user.discord_id, 'config', defaultCode]
-      );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, error: 'Script not found' });
     }
     
-    console.log('All configs reset to default by admin:', req.user.id);
-    res.json({ success: true, message: 'All configs reset to default' });
+    res.json({ success: true });
   } catch (err) {
-    console.error('Error resetting configs:', err);
-    res.status(500).json({ success: false, error: 'Failed to reset configs' });
+    console.error('Error updating script:', err);
+    res.status(500).json({ success: false, error: 'Failed to update script' });
+  }
+});
+
+// API: Delete script
+app.delete('/api/scripts/:name', async (req, res) => {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
+  
+  try {
+    const result = await scriptsCollection.deleteOne({ name: req.params.name });
+    
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, error: 'Script not found' });
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting script:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete script' });
+  }
+});
+
+// API: Execute script
+app.post('/api/scripts/:name/execute', async (req, res) => {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
+  
+  try {
+    const script = await scriptsCollection.findOne({ name: req.params.name });
+    if (!script) {
+      return res.status(404).json({ success: false, error: 'Script not found' });
+    }
+    
+    // Execute the script using eval (WARNING: This is dangerous in production)
+    // In production, use a sandboxed environment like vm2 or a separate worker process
+    let result;
+    try {
+      result = eval(script.code);
+      res.json({ success: true, result, output: String(result) });
+    } catch (execErr) {
+      res.json({ success: false, error: execErr.message, output: null });
+    }
+  } catch (err) {
+    console.error('Error executing script:', err);
+    res.status(500).json({ success: false, error: 'Failed to execute script' });
   }
 });
 
@@ -418,6 +586,7 @@ app.get('/', (req, res) => {
 // Start server after DB connection
 async function startServer() {
   await initDB();
+  await initMongoDB();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`Admin IDs: ${ADMIN_IDS.join(', ')}`);
