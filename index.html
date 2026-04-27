@@ -1038,12 +1038,23 @@ async function do_set() {
   
   // Execute the code to Roblox
   const code = editor.getValue();
-  const execData = await api_post("/execute", { code });
+  console.log('[EXECUTE] Calling /api/execute with code length:', code.length);
+  console.log('[EXECUTE] Full request URL:', API_BASE + '/execute');
   
-  if(execData.success){
-    show_toast(`${active_tab} executed to Roblox`, "success");
-  } else {
-    show_toast(execData.error || "execution failed", "error");
+  try {
+    const execData = await api_post("/execute", { code });
+    console.log('[EXECUTE] Response:', execData);
+    
+    if(execData.success){
+      show_toast(`${active_tab} executed to Roblox`, "success");
+      console.log('[EXECUTE] Success! IP:', execData.ip);
+    } else {
+      show_toast(execData.error || "execution failed", "error");
+      console.error('[EXECUTE] Failed:', execData.error, execData.details);
+    }
+  } catch(err) {
+    console.error('[EXECUTE] Exception:', err);
+    show_toast("execution failed: " + err.message, "error");
   }
   
   const data=await api_post("/tabs/set",{name:active_tab});
