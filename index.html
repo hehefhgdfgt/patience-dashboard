@@ -539,9 +539,9 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
       <!-- Editor Area -->
       <div class="ide_editor_area">
-        <!-- Tabs Bar -->
-        <div class="ide_tabs_bar" id="tabs_bar">
-          <!-- Tabs will be populated here -->
+        <!-- Top Bar with Set Button -->
+        <div style="position:absolute;top:12px;right:12px;z-index:10">
+          <button class="ide_status_btn" onclick="do_set()" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:#6ee7b7;padding:8px 20px;font-size:14px">set</button>
         </div>
         
         <!-- Monaco Editor Container -->
@@ -553,9 +553,6 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
         <div class="ide_status_bar">
           <div class="ide_status_left">
             <span id="save_status">saved</span>
-          </div>
-          <div class="ide_status_right">
-            <button class="ide_status_btn" onclick="do_set()">set</button>
           </div>
         </div>
       </div>
@@ -1203,8 +1200,12 @@ function switch_tab(name) {
   console.log('switch_tab complete, active_tab is now:', active_tab);
 }
 async function add_tab() {
-  let n=1; while(tabs.find(t=>t.name==="config "+n)) n++;
-  const name="config "+n;
+  const name = prompt("Enter config name:", "config");
+  if (!name) return;
+  if (tabs.find(t=>t.name===name)) {
+    show_toast("Config name already exists", "error");
+    return;
+  }
   console.log('Creating new tab:', name);
   const defaultConfig = `shared.coach = {
     ['Main'] = {
