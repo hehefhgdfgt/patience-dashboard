@@ -275,67 +275,51 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 .tab_item.dragging{opacity:0.4;background:rgba(255,255,255,0.1)}
 .tab_item.drag_over{border-left:2px solid var(--accent)}
 
-/* New IDE Layout Styles */
-.ide_layout{display:flex;flex-direction:column;height:100vh;background:var(--bg)}
+/* Execution Tab - Clean Design */
+.exec_layout{display:flex;flex-direction:column;height:100vh;background:var(--bg)}
 
-/* Top Navigation Bar */
-.ide_topbar{height:48px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#0d0d0f;border-bottom:1px solid var(--border)}
-.ide_topbar_left{display:flex;align-items:center;gap:24px}
-.ide_logo{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
-.ide_nav_tabs{display:flex;align-items:center;gap:4px}
-.ide_nav_tab{padding:6px 14px;border-radius:6px;font-size:13px;color:var(--muted2);background:transparent;border:none;cursor:pointer;transition:all 0.2s}
-.ide_nav_tab:hover{color:var(--text);background:rgba(255,255,255,0.05)}
-.ide_nav_tab.active{color:var(--text);background:rgba(255,255,255,0.1)}
-.ide_topbar_right{display:flex;align-items:center;gap:12px}
-.ide_user_badge{display:flex;align-items:center;gap:8px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border)}
-.ide_avatar{width:24px;height:24px;border-radius:50%;object-fit:cover}
-.ide_avatar_fallback{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#e5e5e5}
-.ide_user_info{font-size:12px;color:var(--muted2)}
-.ide_kill_btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#f87171;cursor:pointer;transition:all 0.2s}
-.ide_kill_btn:hover{background:rgba(248,113,113,0.25)}
+/* Top Bar */
+.exec_topbar{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#0a0a0a;border-bottom:1px solid var(--border)}
+.exec_logo{font-size:15px;font-weight:600;color:var(--text)}
+.exec_nav{display:flex;align-items:center;gap:8px}
+.exec_nav_btn{padding:8px 16px;border-radius:6px;font-size:13px;color:var(--muted);background:transparent;border:none;cursor:pointer;transition:all 0.2s}
+.exec_nav_btn:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+.exec_nav_btn.active{color:var(--text);background:rgba(255,255,255,0.1)}
+.exec_user{display:flex;align-items:center;gap:10px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border)}
+.exec_avatar{width:26px;height:26px;border-radius:50%;object-fit:cover}
+.exec_avatar_fallback{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff}
 
-/* Main Content Area */
-.ide_main{flex:1;display:flex;overflow:hidden}
+/* Main Layout */
+.exec_main{flex:1;display:flex;overflow:hidden}
 
-/* Left Sidebar - File Explorer */
-.ide_sidebar{width:220px;flex-shrink:0;background:#0d0d0f;border-right:1px solid var(--border);display:flex;flex-direction:column}
-.ide_sidebar_header{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--border)}
-.ide_sidebar_title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
-.ide_sidebar_add{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;transition:all 0.2s}
-.ide_sidebar_add:hover{background:rgba(255,255,255,0.1);color:var(--text)}
-.ide_file_tree{flex:1;overflow-y:auto;padding:8px}
-.ide_file_item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:all 0.15s;font-size:13px;color:var(--muted2)}
-.ide_file_item:hover{background:rgba(255,255,255,0.05);color:var(--text)}
-.ide_file_item.active{background:rgba(255,255,255,0.2);color:var(--text)}
-.ide_file_item svg{width:14px;height:14px;opacity:0.7}
-.ide_file_delete{margin-left:auto;width:16px;height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.15s;font-size:14px;color:var(--muted)}
-.ide_file_item:hover .ide_file_delete{opacity:1}
-.ide_file_delete:hover{background:rgba(248,113,113,0.2);color:#f87171}
+/* Config List Sidebar */
+.exec_sidebar{width:260px;flex-shrink:0;background:#0a0a0a;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.exec_sidebar_header{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border)}
+.exec_sidebar_title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
+.exec_new_btn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;transition:all 0.2s}
+.exec_new_btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.exec_config_list{flex:1;overflow-y:auto;padding:12px}
+.exec_config_item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-size:14px;color:var(--muted2);margin-bottom:4px}
+.exec_config_item:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+.exec_config_item.active{background:rgba(255,255,255,0.15);color:var(--text)}
+.exec_config_item svg{width:16px;height:16px;opacity:0.6}
+.exec_config_delete{margin-left:auto;width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.15s;font-size:16px;color:var(--muted)}
+.exec_config_item:hover .exec_config_delete{opacity:1}
+.exec_config_delete:hover{background:rgba(248,113,113,0.2);color:#f87171}
 
-/* Editor Area */
-.ide_editor_area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.ide_editor_header{height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#0d0d0f;border-bottom:1px solid var(--border)}
-.ide_set_btn{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;cursor:pointer;transition:all 0.2s}
-.ide_set_btn:hover{background:rgba(16,185,129,0.25)}
-.ide_tabs_bar{height:35px;flex-shrink:0;display:none;align-items:center;background:#0d0d0f;border-bottom:1px solid var(--border);overflow-x:auto;overflow-y:hidden}
-.ide_tabs_bar::-webkit-scrollbar{height:0}
-.ide_tab{display:flex;align-items:center;gap:8px;padding:0 14px;height:35px;border-right:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all 0.15s;position:relative;background:transparent;border:none}
-.ide_tab:hover{background:rgba(255,255,255,0.03);color:var(--text)}
-.ide_tab.active{background:#000000;color:var(--text);border:1px solid #ffffff}
-.ide_tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent)}
-.ide_tab_close{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.15s;font-size:11px}
-.ide_tab:hover .ide_tab_close{opacity:1}
-.ide_tab_close:hover{background:rgba(248,113,113,0.2);color:#f87171}
-.ide_tab_add{width:35px;height:35px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;transition:all 0.2s}
-.ide_tab_add:hover{background:rgba(255,255,255,0.05);color:var(--text)}
-.ide_editor_container{flex:1;overflow:hidden;min-height:400px}
-
-/* Status Bar */
-.ide_status_bar{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#0d0d0f;border-top:1px solid var(--border)}
-.ide_status_left{font-size:11px;color:var(--muted)}
-.ide_status_right{display:flex;align-items:center;gap:8px}
-.ide_status_btn{padding:4px 12px;border-radius:4px;font-size:11px;font-weight:500;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:var(--text);cursor:pointer;transition:all 0.2s}
-.ide_status_btn:hover{background:rgba(255,255,255,0.2)}
+/* Editor Section */
+.exec_editor{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.exec_editor_header{height:48px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#0a0a0a;border-bottom:1px solid var(--border)}
+.exec_editor_title{font-size:14px;color:var(--muted);font-weight:400}
+.exec_editor_title span{color:var(--text);font-weight:500}
+.exec_set_btn{padding:8px 20px;border-radius:6px;font-size:13px;font-weight:500;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;cursor:pointer;transition:all 0.2s}
+.exec_set_btn:hover{background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.4)}
+.exec_editor_container{flex:1;overflow:hidden;position:relative}
+#editor_container{position:absolute;top:0;left:0;right:0;bottom:0}
+.exec_status_bar{height:32px;flex-shrink:0;display:flex;align-items:center;padding:0 16px;background:#0a0a0a;border-top:1px solid var(--border)}
+.exec_status{font-size:12px;color:var(--muted)}
+.exec_status.saved{color:rgba(16,185,129,0.8)}
+.exec_status.unsaved{color:rgba(248,113,113,0.8)}
 
 /* Settings Panel */
 #settings_panel{flex:1;overflow-y:auto;padding:28px;background:var(--bg)}
@@ -505,56 +489,48 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
 
 <div id="page_dashboard">
-  <div class="ide_layout">
-    <!-- Top Navigation Bar -->
-    <div class="ide_topbar">
-      <div class="ide_topbar_left">
-        <span class="ide_logo">coach.fun</span>
-        <div class="ide_nav_tabs">
-          <button class="ide_nav_tab" onclick="switch_panel('editor')">autoexec</button>
-          <button class="ide_nav_tab active" id="nav_editor" onclick="switch_panel('editor')">execution</button>
-          <button class="ide_nav_tab" id="nav_settings" onclick="switch_panel('settings')">settings</button>
-          <button class="ide_nav_tab" id="nav_admin" onclick="switch_panel('admin')" style="display:none">admin</button>
+  <div class="exec_layout">
+    <!-- Top Bar -->
+    <div class="exec_topbar">
+      <div style="display:flex;align-items:center;gap:20px">
+        <span class="exec_logo">coach.fun</span>
+        <div class="exec_nav">
+          <button class="exec_nav_btn active" id="nav_editor" onclick="switch_panel('editor')">execution</button>
+          <button class="exec_nav_btn" id="nav_settings" onclick="switch_panel('settings')">settings</button>
+          <button class="exec_nav_btn" id="nav_admin" onclick="switch_panel('admin')" style="display:none">admin</button>
         </div>
       </div>
-      <div class="ide_topbar_right">
-        <div class="ide_user_badge">
-          <img id="dash_avatar" class="ide_avatar" src="" alt="" style="display:none">
-          <div id="dash_avatar_fallback" class="ide_avatar_fallback"></div>
-          <span class="ide_user_info" id="dash_display_name"></span>
-        </div>
+      <div class="exec_user">
+        <img id="dash_avatar" class="exec_avatar" src="" alt="" style="display:none">
+        <div id="dash_avatar_fallback" class="exec_avatar_fallback"></div>
+        <span id="dash_display_name" style="font-size:13px;color:var(--muted)"></span>
       </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="ide_main">
-      <!-- Left Sidebar - File Explorer -->
-      <div class="ide_sidebar">
-        <div class="ide_sidebar_header">
-          <span class="ide_sidebar_title">configs</span>
-          <button class="ide_sidebar_add" onclick="add_tab()" title="new config">+</button>
+    <!-- Main Content -->
+    <div class="exec_main">
+      <!-- Config Sidebar -->
+      <div class="exec_sidebar">
+        <div class="exec_sidebar_header">
+          <span class="exec_sidebar_title">configs</span>
+          <button class="exec_new_btn" onclick="add_tab()" title="new config">+</button>
         </div>
-        <div class="ide_file_tree" id="file_tree">
-          <!-- Scripts will be populated here -->
+        <div class="exec_config_list" id="file_tree">
+          <!-- Configs populated here -->
         </div>
       </div>
 
       <!-- Editor Area -->
-      <div class="ide_editor_area">
-        <!-- Top Bar -->
-        <div class="ide_editor_header">
-          <span id="current_config_name" style="color:var(--muted)">no config selected</span>
-          <button class="ide_set_btn" onclick="do_set()">set</button>
+      <div class="exec_editor">
+        <div class="exec_editor_header">
+          <div class="exec_editor_title">editing: <span id="current_config_name">none</span></div>
+          <button class="exec_set_btn" onclick="do_set()">set active</button>
         </div>
-        
-        <!-- Monaco Editor Container -->
-        <div id="editor_panel" class="ide_editor_container">
-          <div id="editor_container" style="width:100%;height:100%"></div>
+        <div class="exec_editor_container">
+          <div id="editor_container"></div>
         </div>
-
-        <!-- Bottom Status Bar -->
-        <div class="ide_status_bar">
-          <span id="save_status">saved</span>
+        <div class="exec_status_bar">
+          <span id="save_status" class="exec_status saved">saved</span>
         </div>
       </div>
     </div>
@@ -633,8 +609,11 @@ function show_toast(msg, type="success") {
 
 function set_dirty(v) {
   is_dirty = v;
-  document.getElementById("save_dot").className = "save_dot "+(v?"dirty":"saved");
-  document.getElementById("save_status").textContent = v?"unsaved":"saved";
+  const statusEl = document.getElementById("save_status");
+  if (statusEl) {
+    statusEl.textContent = v ? "unsaved changes" : "saved";
+    statusEl.className = "exec_status " + (v ? "unsaved" : "saved");
+  }
 }
 
 
@@ -1179,11 +1158,11 @@ function render_file_tree() {
   tree.innerHTML = "";
   tabs.forEach(t => {
     const item = document.createElement("div");
-    item.className = "ide_file_item"+(t.name===active_tab?" active":"");
+    item.className = "exec_config_item"+(t.name===active_tab?" active":"");
     item.innerHTML = `
       <svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
       <span>${esc(t.name)}</span>
-      <span class="ide_file_delete" onclick="event.stopPropagation();delete_tab('${esc(t.name)}')">&times;</span>
+      <span class="exec_config_delete" onclick="event.stopPropagation();delete_tab('${esc(t.name)}')">&times;</span>
     `;
     item.onclick = () => switch_tab(t.name);
     tree.appendChild(item);
@@ -1457,27 +1436,34 @@ function mp_next_page(){if(mp_current_page>=mp_total_pages)return;mp_current_pag
 
 
 function switch_panel(panel) {
-  current_panel=panel;
+  current_panel = panel;
   
-  // Update navigation tabs
-  ["editor","settings","admin"].forEach(p=>{
-    const nav=document.getElementById("nav_"+p); if(nav)nav.classList.toggle("active",p===panel);
-  });
+  // Update nav tabs
+  document.querySelectorAll(".exec_nav_btn").forEach(btn => btn.classList.remove("active"));
+  const navBtns = {
+    "editor": "nav_editor",
+    "settings": "nav_settings",
+    "admin": "nav_admin"
+  };
+  if (navBtns[panel]) {
+    const btn = document.getElementById(navBtns[panel]);
+    if (btn) btn.classList.add("active");
+  }
   
   // Show/hide panels
-  const mainEl=document.querySelector(".ide_main");
+  const mainEl=document.querySelector(".exec_main");
   const settingsEl=document.getElementById("settings_panel");
   const adminEl=document.getElementById("admin_panel");
   
-  if (panel==="editor") {
+  if (panel === "editor") {
     if(mainEl)mainEl.style.display="flex";
     if(settingsEl)settingsEl.style.display="none";
     if(adminEl)adminEl.style.display="none";
-  } else if (panel==="settings") {
+  } else if (panel === "settings") {
     if(mainEl)mainEl.style.display="none";
     if(settingsEl)settingsEl.style.display="block";
     if(adminEl)adminEl.style.display="none";
-  } else if (panel==="admin") {
+  } else if (panel === "admin") {
     if(mainEl)mainEl.style.display="none";
     if(settingsEl)settingsEl.style.display="none";
     if(adminEl)adminEl.style.display="flex";
