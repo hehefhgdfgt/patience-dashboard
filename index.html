@@ -341,6 +341,12 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 .settings_select{flex:1;max-width:200px;padding:10px 12px;border-radius:8px;font-size:13px;background:var(--bg3);border:1px solid var(--border);color:var(--text);cursor:pointer;outline:none;transition:all 0.2s}
 .settings_select:hover{border-color:var(--border2)}
 .settings_select:focus{border-color:var(--accent)}
+.dropdown{position:relative;display:inline-block}
+.dropdown_btn{position:relative;padding-right:30px}
+.dropdown_menu{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+.dropdown_item{padding:10px 14px;font-size:13px;color:var(--text);cursor:pointer;transition:background 0.15s;border-bottom:1px solid var(--border)}
+.dropdown_item:last-child{border-bottom:none}
+.dropdown_item:hover{background:var(--bg3)}
 
 /* Admin Panel */
 .ide_admin_layout{flex:1;overflow-y:auto;padding:28px;background:var(--bg)}
@@ -576,10 +582,12 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
         <div class="settings_section">
           <h3>data</h3>
           <div class="setting_row">
-            <select id="export_config_select" class="settings_select">
-              <option value="all">all configs</option>
-            </select>
-            <button class="settings_btn" onclick="export_selected_config()">export</button>
+            <div class="dropdown">
+              <button class="settings_btn dropdown_btn" onclick="toggle_export_dropdown()">export configs ▼</button>
+              <div id="export_dropdown" class="dropdown_menu" style="display:none">
+                <div class="dropdown_item" onclick="export_config('all')">all configs</div>
+              </div>
+            </div>
           </div>
           <div class="setting_row">
             <button class="settings_btn" onclick="document.getElementById('import_file').click()">import configs</button>
@@ -929,7 +937,7 @@ function make_av_fallback(n) { const el=document.createElement("div"); el.classN
 function render_tabs(activate) {
   console.log('render_tabs called with activate:', activate, 'active_tab:', active_tab);
   render_file_tree();
-  update_export_dropdown();
+  update_export_dropdown_menu();
   if (activate) active_tab = activate;
   console.log('render_tabs complete, active_tab is now:', active_tab);
 }
@@ -1153,9 +1161,34 @@ function update_font_size(size) {
   localStorage.setItem("editor_font_size", size);
 }
 
-function export_selected_config() {
-  const select = document.getElementById("export_config_select");
-  const selected = select.value;
+function toggle_export_dropdown() {
+  const dropdown = document.getElementById("export_dropdown");
+  const isVisible = dropdown.style.display !== "none";
+  dropdown.style.display = isVisible ? "none" : "block";
+  
+  if (!isVisible) {
+    update_export_dropdown_menu();
+  }
+}
+
+function update_export_dropdown_menu() {
+  const dropdown = document.getElementById("export_dropdown");
+  if (!dropdown) return;
+  
+  dropdown.innerHTML = '<div class="dropdown_item" onclick="export_config(\'all\')">all configs</div>';
+  
+  tabs.forEach(t => {
+    const item = document.createElement("div");
+    item.className = "dropdown_item";
+    item.textContent = t.name;
+    item.onclick = () => export_config(t.name);
+    dropdown.appendChild(item);
+  });
+}
+
+function export_config(configName) {
+  const dropdown = document.getElementById("export_dropdown");
+  dropdown.style.display = "none";
   
   if (tabs.length === 0) {
     show_toast("no configs to export", "error");
@@ -1165,11 +1198,11 @@ function export_selected_config() {
   let configsToExport;
   let filename;
   
-  if (selected === "all") {
+  if (configName === "all") {
     configsToExport = tabs;
     filename = `coach_configs_${new Date().toISOString().split("T")[0]}.json`;
   } else {
-    const config = tabs.find(t => t.name === selected);
+    const config = tabs.find(t => t.name === configName);
     if (!config) {
       show_toast("config not found", "error");
       return;
@@ -1186,27 +1219,7 @@ function export_selected_config() {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  show_toast(selected === "all" ? "all configs exported" : "config exported", "success");
-}
-
-function update_export_dropdown() {
-  const select = document.getElementById("export_config_select");
-  if (!select) return;
-  
-  const currentSelection = select.value;
-  select.innerHTML = '<option value="all">all configs</option>';
-  
-  tabs.forEach(t => {
-    const option = document.createElement("option");
-    option.value = t.name;
-    option.textContent = t.name;
-    select.appendChild(option);
-  });
-  
-  // Restore selection if it still exists
-  if (tabs.find(t => t.name === currentSelection)) {
-    select.value = currentSelection;
-  }
+  show_toast(configName === "all" ? "all configs exported" : "config exported", "success");
 }
 
 async function import_configs(input) {
