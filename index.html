@@ -308,8 +308,8 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 /* Editor Section */
 .exec_editor{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .exec_editor_header{height:48px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#0a0a0a;border-bottom:1px solid var(--border)}
-.exec_editor_title{font-size:14px;color:var(--muted);font-weight:400}
-.exec_editor_title span{color:var(--text);font-weight:500}
+.exec_config_indicator{display:flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:13px;color:var(--text)}
+.exec_config_dot{width:6px;height:6px;border-radius:50%;background:#ffffff}
 .exec_set_btn{padding:8px 20px;border-radius:6px;font-size:13px;font-weight:500;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;cursor:pointer;transition:all 0.2s}
 .exec_set_btn:hover{background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.4)}
 .exec_editor_container{flex:1;overflow:hidden;position:relative;background:#0a0a0a}
@@ -521,8 +521,11 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
       <!-- Editor Area -->
       <div class="exec_editor">
         <div class="exec_editor_header">
-          <div class="exec_editor_title">editing: <span id="current_config_name">none</span></div>
-          <button class="exec_set_btn" onclick="do_set()">set active</button>
+          <div class="exec_config_indicator">
+            <span class="exec_config_dot"></span>
+            <span id="current_config_name">tuls config</span>
+          </div>
+          <button class="exec_set_btn" onclick="do_set()">set</button>
         </div>
         <div class="exec_editor_container">
           <div id="editor_container"></div>
