@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>coach.fun</title>
 <link href="css/css2" rel="stylesheet">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -602,103 +601,8 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
 <div class="toast" id="toast"></div>
 
-<!-- CAPTCHA Modal -->
-<div id="captcha-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a1a;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
-  <h2 style="color:#fff;font-size:24px;margin:0;">Security Check</h2>
-  <p style="color:#888;margin:0;">Please complete the CAPTCHA to continue</p>
-  <div class="cf-turnstile" data-sitekey="0x4AAAAAADD_MR1jNRP8YwvA" data-callback="onCaptchaSuccess"></div>
-</div>
-
-<script>
-// Check if CAPTCHA already verified
-if (localStorage.getItem('captcha_verified') === 'true') {
-  document.getElementById('captcha-modal').style.display = 'none';
-}
-</script>
-
 <script>
 const API_BASE = "/api";
-
-let turnstileToken = null;
-let captchaVerified = false;
-
-function onCaptchaSuccess(token) {
-  turnstileToken = token;
-  verifyCaptchaAndUnlock();
-}
-
-function onTurnstileSuccess(token) {
-  turnstileToken = token;
-  const dashboardBtn = document.getElementById('dashboard-btn');
-  if (dashboardBtn) {
-    dashboardBtn.style.opacity = '1';
-    dashboardBtn.style.pointerEvents = 'auto';
-    dashboardBtn.onclick = async (e) => {
-      e.preventDefault();
-      await verifyAndRedirect();
-    };
-  }
-}
-
-async function verifyCaptchaAndUnlock() {
-  if (!turnstileToken) return;
-  
-  console.log('Verifying CAPTCHA token...');
-  
-  try {
-    const response = await fetch('/api/turnstile/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: turnstileToken })
-    });
-    
-    const data = await response.json();
-    console.log('CAPTCHA verification response:', data);
-    
-    if (data.success) {
-      captchaVerified = true;
-      // Store in localStorage so user doesn't have to complete again
-      localStorage.setItem('captcha_verified', 'true');
-      const modal = document.getElementById('captcha-modal');
-      if (modal) {
-        modal.style.display = 'none';
-        console.log('CAPTCHA modal hidden, page unlocked');
-      }
-    } else {
-      console.error('CAPTCHA verification failed:', data.error);
-      alert('Security check failed. Please try again.');
-    }
-  } catch (err) {
-    console.error('CAPTCHA verification error:', err);
-    alert('Error verifying security check. Please refresh and try again.');
-  }
-}
-
-async function verifyAndRedirect() {
-  if (!turnstileToken) {
-    show_toast('Please complete the CAPTCHA', 'error');
-    return;
-  }
-  
-  try {
-    const response = await fetch('/api/turnstile/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: turnstileToken })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      window.location.href = '/auth/discord';
-    } else {
-      show_toast('CAPTCHA verification failed', 'error');
-    }
-  } catch (err) {
-    console.error('Verification error:', err);
-    show_toast('Verification error', 'error');
-  }
-}
 
 
 const SHIELD_SVG = `<svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`;
