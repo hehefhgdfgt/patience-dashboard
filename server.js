@@ -578,6 +578,44 @@ app.post('/api/scripts/:name/execute', async (req, res) => {
   }
 });
 
+// API: Execute Lua code to Roblox
+app.post('/api/execute', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  const { code } = req.body;
+  if (!code) {
+    return res.status(400).json({ success: false, error: 'Code required' });
+  }
+  
+  // Get Roblox executor API URL from environment
+  const ROBLOX_EXECUTOR_URL = process.env.ROBLOX_EXECUTOR_URL;
+  
+  if (!ROBLOX_EXECUTOR_URL) {
+    return res.status(503).json({ success: false, error: 'Roblox executor not configured' });
+  }
+  
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(ROBLOX_EXECUTOR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: code,
+        user: req.user.id,
+        timestamp: Date.now()
+      })
+    });
+    
+    const result = await response.json();
+    res.json({ success: true, result });
+  } catch (err) {
+    console.error('Error executing to Roblox:', err);
+    res.status(500).json({ success: false, error: 'Failed to execute script to Roblox' });
+  }
+});
+
 // Serve the frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
