@@ -423,34 +423,67 @@ app.post('/api/tabs/set', async (req, res) => {
 app.post('/api/turnstile/verify', async (req, res) => {
   const { token } = req.body;
   
+  console.log('Turnstile verify request received, token present:', !!token);
+  
   if (!token) {
+    console.log('Turnstile verify: No token provided');
     return res.status(400).json({ success: false, error: 'Token required' });
   }
   
   if (!TURNSTILE_SECRET_KEY) {
-    // If no secret key configured, skip verification (for development)
+    console.log('Turnstile verify: No secret key configured, skipping verification');
     return res.json({ success: true });
   }
   
   try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    console.log('Turnstile verify: Sending request to Cloudflare...');
+    
+    // Use node-fetch or built-in https
+    const https = require('https');
+    const querystring = require('querystring');
+    
+    const postData = querystring.stringify({
+      secret: TURNSTILE_SECRET_KEY,
+      response: token
+    });
+    
+    const options = {
+      hostname: 'challenges.cloudflare.com',
+      path: '/turnstile/v0/siteverify',
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `secret=${encodeURIComponent(TURNSTILE_SECRET_KEY)}&response=${encodeURIComponent(token)}`,
+        'Content-Length': postData.length
+      }
+    };
+    
+    const requestPromise = new Promise((resolve, reject) => {
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', (chunk) => data += chunk);
+        response.on('end', () => resolve(data));
+      });
+      
+      request.on('error', (err) => reject(err));
+      request.write(postData);
+      request.end();
     });
     
-    const result = await response.json();
+    const responseData = await requestPromise;
+    const result = JSON.parse(responseData);
+    
+    console.log('Turnstile verify: Cloudflare response:', result);
     
     if (result.success) {
+      console.log('Turnstile verify: SUCCESS');
       res.json({ success: true });
     } else {
-      res.status(400).json({ success: false, error: 'Verification failed' });
+      console.log('Turnstile verify: FAILED -', result['error-codes']);
+      res.status(400).json({ success: false, error: 'Verification failed', details: result['error-codes'] });
     }
   } catch (err) {
     console.error('Turnstile verification error:', err);
-    res.status(500).json({ success: false, error: 'Verification error' });
+    res.status(500).json({ success: false, error: 'Verification error', details: err.message });
   }
 });
 
