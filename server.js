@@ -15,7 +15,6 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1497815572015218871'
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'JnvjqcBpMF7tMqDoQzUxv4Soifu9lDjz';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'patience-secret-key-change-in-production';
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || '0x4AAAAAADD_MauhB3QyttzVq0QSozic29M';
-const ADMIN_IDS = ['903808042355806239', '586722125289619482'];
 
 // MySQL Connection - uses Railway's MYSQL_URL
 const MYSQL_URL = process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
@@ -28,8 +27,8 @@ const WHITELIST_FILE = path.join(__dirname, 'whitelist.json');
 // Initialize JSON whitelist file if it doesn't exist
 if (!fs.existsSync(WHITELIST_FILE)) {
   fs.writeFileSync(WHITELIST_FILE, JSON.stringify({
-    admin: ADMIN_IDS[0],
-    users: ADMIN_IDS
+    admin: null,
+    users: []
   }, null, 2));
 }
 
@@ -39,7 +38,7 @@ function loadWhitelist() {
     const data = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf8'));
     return data;
   }
-  return { admin: ADMIN_IDS[0], users: ADMIN_IDS };
+  return { admin: null, users: [] };
 }
 
 // Save whitelist to JSON
@@ -81,13 +80,7 @@ async function initDB() {
       )
     `);
     
-    // Insert admins if not exists
-    for (const adminId of ADMIN_IDS) {
-      await db.execute(
-        'INSERT IGNORE INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
-        [adminId, 'admin', 'system']
-      );
-    }
+    // Note: Admins should be added manually via admin panel or database
     
     console.log('Database initialized');
   } catch (err) {
@@ -107,16 +100,26 @@ async function isWhitelisted(discordId) {
   }
 }
 
-// Check if user is admin
-function isAdmin(discordId) {
-  return ADMIN_IDS.includes(discordId);
+// Check if user is admin (checks database for is_admin flag or specific entries)
+async function isAdmin(discordId) {
+  if (useMySQL) {
+    // Check if user has 'admin' as username or is in a separate admin list
+    const [rows] = await db.execute('SELECT discord_id FROM whitelist WHERE discord_id = ? AND username = ?', [discordId, 'admin']);
+    return rows.length > 0;
+  } else {
+    const whitelist = loadWhitelist();
+    return whitelist.admin === discordId;
+  }
 }
 
 // Get all whitelisted users
 async function getWhitelist() {
   if (useMySQL) {
     const [rows] = await db.execute('SELECT * FROM whitelist ORDER BY added_at DESC');
-    return { admin: ADMIN_IDS[0], users: rows };
+    // Get first admin from whitelist where username = 'admin'
+    const [adminRows] = await db.execute('SELECT discord_id FROM whitelist WHERE username = ? LIMIT 1', ['admin']);
+    const adminId = adminRows.length > 0 ? adminRows[0].discord_id : null;
+    return { admin: adminId, users: rows };
   } else {
     return loadWhitelist();
   }
@@ -146,7 +149,8 @@ async function addToWhitelist(discordId, username, addedBy) {
 
 // Remove user from whitelist
 async function removeFromWhitelist(discordId) {
-  if (ADMIN_IDS.includes(discordId)) return false; // Can't remove admin
+  // Check if user is admin (can't remove admins)
+  if (await isAdmin(discordId)) return false;
   
   if (useMySQL) {
     try {
@@ -257,7 +261,7 @@ app.get('/auth/logout', (req, res) => {
 });
 
 // API: Get current user
-app.get('/api/auth/me', (req, res) => {
+app.get('/api/auth/me', async (req, res) => {
   console.log('Auth check - isAuthenticated:', req.isAuthenticated(), 'user:', req.user?.id);
   if (!req.isAuthenticated()) {
     return res.json({ success: false });
@@ -272,13 +276,13 @@ app.get('/api/auth/me', (req, res) => {
     username: req.user.username,
     global_name: req.user.global_name || req.user.username,
     avatar: req.user.avatar,
-    is_admin: isAdmin(discordId)
+    is_admin: await isAdmin(discordId)
   });
 });
 
 // API: Get whitelist (admin only)
 app.get('/api/admin/whitelist', async (req, res) => {
-  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+  if (!req.isAuthenticated() || !(await isAdmin(req.user.id))) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
@@ -288,7 +292,7 @@ app.get('/api/admin/whitelist', async (req, res) => {
 
 // API: Add user to whitelist (admin only)
 app.post('/api/admin/whitelist/add', async (req, res) => {
-  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+  if (!req.isAuthenticated() || !(await isAdmin(req.user.id))) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
@@ -315,7 +319,7 @@ app.post('/api/admin/whitelist/add', async (req, res) => {
 
 // API: Remove user from whitelist (admin only)
 app.post('/api/admin/whitelist/remove', async (req, res) => {
-  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+  if (!req.isAuthenticated() || !(await isAdmin(req.user.id))) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
@@ -325,7 +329,8 @@ app.post('/api/admin/whitelist/remove', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Discord ID required' });
   }
   
-  if (ADMIN_IDS.includes(discord_id)) {
+  const adminCheck = await isAdmin(discord_id);
+  if (adminCheck) {
     return res.status(400).json({ success: false, error: 'Cannot remove admin' });
   }
   
@@ -489,7 +494,7 @@ async function startServer() {
   await initDB();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Admin IDs: ${ADMIN_IDS.join(', ')}`);
+    console.log('Admins are stored in database (MySQL) or JSON file');
     console.log('Make sure to set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET environment variables');
   });
 }
