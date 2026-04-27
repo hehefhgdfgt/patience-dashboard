@@ -15,48 +15,22 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1497815572015218871'
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'JnvjqcBpMF7tMqDoQzUxv4Soifu9lDjz';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'patience-secret-key-change-in-production';
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || '0x4AAAAAADD_MauhB3QyttzVq0QSozic29M';
+const ADMIN_IDS = ['903808042355806239', '586722125289619482'];
 
 // MySQL Connection - uses Railway's MYSQL_URL
 const MYSQL_URL = process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
 let db;
-let useMySQL = false;
 
-// JSON file fallback
-const WHITELIST_FILE = path.join(__dirname, 'whitelist.json');
-
-// Initialize JSON whitelist file if it doesn't exist
-if (!fs.existsSync(WHITELIST_FILE)) {
-  fs.writeFileSync(WHITELIST_FILE, JSON.stringify({
-    admin: null,
-    users: []
-  }, null, 2));
-}
-
-// Load whitelist from JSON
-function loadWhitelist() {
-  if (fs.existsSync(WHITELIST_FILE)) {
-    const data = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf8'));
-    return data;
-  }
-  return { admin: null, users: [] };
-}
-
-// Save whitelist to JSON
-function saveWhitelist(whitelist) {
-  fs.writeFileSync(WHITELIST_FILE, JSON.stringify(whitelist, null, 2));
-}
-
-// Initialize MySQL connection (optional)
+// Initialize MySQL connection (required)
 async function initDB() {
   if (!MYSQL_URL) {
-    console.log('No MYSQL_URL provided, using JSON file storage');
-    return;
+    console.error('MYSQL_URL is required. Please set the MYSQL_URL environment variable.');
+    process.exit(1);
   }
   
   try {
     db = await mysql.createConnection(MYSQL_URL);
     console.log('MySQL connected successfully');
-    useMySQL = true;
     
     // Create whitelist table if not exists
     await db.execute(`
@@ -80,91 +54,62 @@ async function initDB() {
       )
     `);
     
-    // Note: Admins should be added manually via admin panel or database
+    // Insert admins if not exists
+    for (const adminId of ADMIN_IDS) {
+      await db.execute(
+        'INSERT IGNORE INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
+        [adminId, 'admin', 'system']
+      );
+    }
     
     console.log('Database initialized');
   } catch (err) {
-    console.error('MySQL connection error, falling back to JSON storage:', err.message);
-    useMySQL = false;
+    console.error('MySQL connection error:', err.message);
+    process.exit(1);
   }
 }
 
 // Check if user is whitelisted
 async function isWhitelisted(discordId) {
-  if (useMySQL) {
-    const [rows] = await db.execute('SELECT discord_id FROM whitelist WHERE discord_id = ?', [discordId]);
-    return rows.length > 0;
-  } else {
-    const whitelist = loadWhitelist();
-    return whitelist.users.includes(discordId);
-  }
+  const [rows] = await db.execute('SELECT discord_id FROM whitelist WHERE discord_id = ?', [discordId]);
+  return rows.length > 0;
 }
 
-// Check if user is admin (checks database for is_admin flag or specific entries)
-async function isAdmin(discordId) {
-  if (useMySQL) {
-    // Check if user has 'admin' as username or is in a separate admin list
-    const [rows] = await db.execute('SELECT discord_id FROM whitelist WHERE discord_id = ? AND username = ?', [discordId, 'admin']);
-    return rows.length > 0;
-  } else {
-    const whitelist = loadWhitelist();
-    return whitelist.admin === discordId;
-  }
+// Check if user is admin
+function isAdmin(discordId) {
+  return ADMIN_IDS.includes(discordId);
 }
 
 // Get all whitelisted users
 async function getWhitelist() {
-  if (useMySQL) {
-    const [rows] = await db.execute('SELECT * FROM whitelist ORDER BY added_at DESC');
-    // Get first admin from whitelist where username = 'admin'
-    const [adminRows] = await db.execute('SELECT discord_id FROM whitelist WHERE username = ? LIMIT 1', ['admin']);
-    const adminId = adminRows.length > 0 ? adminRows[0].discord_id : null;
-    return { admin: adminId, users: rows };
-  } else {
-    return loadWhitelist();
-  }
+  const [rows] = await db.execute('SELECT * FROM whitelist ORDER BY added_at DESC');
+  return { admin: ADMIN_IDS[0], users: rows };
 }
 
 // Add user to whitelist
 async function addToWhitelist(discordId, username, addedBy) {
-  if (useMySQL) {
-    try {
-      await db.execute(
-        'INSERT INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
-        [discordId, username, addedBy]
-      );
-      return true;
-    } catch (err) {
-      console.error('Error adding to whitelist:', err);
-      return false;
-    }
-  } else {
-    const whitelist = loadWhitelist();
-    if (whitelist.users.includes(discordId)) return false;
-    whitelist.users.push(discordId);
-    saveWhitelist(whitelist);
+  try {
+    await db.execute(
+      'INSERT INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
+      [discordId, username, addedBy]
+    );
     return true;
+  } catch (err) {
+    console.error('Error adding to whitelist:', err);
+    return false;
   }
 }
 
 // Remove user from whitelist
 async function removeFromWhitelist(discordId) {
-  // Check if user is admin (can't remove admins)
-  if (await isAdmin(discordId)) return false;
+  if (ADMIN_IDS.includes(discordId)) return false; // Can't remove admin
   
-  if (useMySQL) {
-    try {
-      await db.execute('DELETE FROM whitelist WHERE discord_id = ?', [discordId]);
-      return true;
-    } catch (err) {
-      console.error('Error removing from whitelist:', err);
-      return false;
-    }
-  } else {
-    const whitelist = loadWhitelist();
-    whitelist.users = whitelist.users.filter(id => id !== discordId);
-    saveWhitelist(whitelist);
+  try {
+    await db.execute('DELETE FROM whitelist WHERE discord_id = ?', [discordId]);
     return true;
+  } catch (err) {
+    console.error('Error removing from whitelist:', err);
+    return false;
   }
 }
 
@@ -261,7 +206,7 @@ app.get('/auth/logout', (req, res) => {
 });
 
 // API: Get current user
-app.get('/api/auth/me', async (req, res) => {
+app.get('/api/auth/me', (req, res) => {
   console.log('Auth check - isAuthenticated:', req.isAuthenticated(), 'user:', req.user?.id);
   if (!req.isAuthenticated()) {
     return res.json({ success: false });
@@ -276,13 +221,13 @@ app.get('/api/auth/me', async (req, res) => {
     username: req.user.username,
     global_name: req.user.global_name || req.user.username,
     avatar: req.user.avatar,
-    is_admin: await isAdmin(discordId)
+    is_admin: isAdmin(discordId)
   });
 });
 
 // API: Get whitelist (admin only)
 app.get('/api/admin/whitelist', async (req, res) => {
-  if (!req.isAuthenticated() || !(await isAdmin(req.user.id))) {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
@@ -292,12 +237,12 @@ app.get('/api/admin/whitelist', async (req, res) => {
 
 // API: Add user to whitelist (admin only)
 app.post('/api/admin/whitelist/add', async (req, res) => {
-  if (!req.isAuthenticated() || !(await isAdmin(req.user.id))) {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
   const { discord_id, username } = req.body;
-  console.log('Adding to whitelist:', discord_id, username, 'using MySQL:', useMySQL);
+  console.log('Adding to whitelist:', discord_id, username);
   if (!discord_id) {
     return res.status(400).json({ success: false, error: 'Discord ID required' });
   }
@@ -319,18 +264,17 @@ app.post('/api/admin/whitelist/add', async (req, res) => {
 
 // API: Remove user from whitelist (admin only)
 app.post('/api/admin/whitelist/remove', async (req, res) => {
-  if (!req.isAuthenticated() || !(await isAdmin(req.user.id))) {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
   
   const { discord_id } = req.body;
-  console.log('Removing from whitelist:', discord_id, 'using MySQL:', useMySQL);
+  console.log('Removing from whitelist:', discord_id);
   if (!discord_id) {
     return res.status(400).json({ success: false, error: 'Discord ID required' });
   }
   
-  const adminCheck = await isAdmin(discord_id);
-  if (adminCheck) {
+  if (ADMIN_IDS.includes(discord_id)) {
     return res.status(400).json({ success: false, error: 'Cannot remove admin' });
   }
   
@@ -352,7 +296,7 @@ app.post('/api/tabs/save', async (req, res) => {
   
   const { name, code } = req.body;
   const discordId = req.user.id;
-  console.log('Saving tab:', name, 'for user:', discordId, 'using MySQL:', useMySQL);
+  console.log('Saving tab:', name, 'for user:', discordId);
   console.log('Code length:', code ? code.length : 0);
   console.log('Code preview:', code ? code.substring(0, 100) : 'no code');
   
@@ -360,20 +304,15 @@ app.post('/api/tabs/save', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Name and code required' });
   }
   
-  if (useMySQL) {
-    try {
-      await db.execute(
-        'INSERT INTO user_configs (discord_id, tab_name, code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE code = ?, updated_at = CURRENT_TIMESTAMP',
-        [discordId, name, code, code]
-      );
-      res.json({ success: true });
-    } catch (err) {
-      console.error('Error saving tab:', err);
-      res.status(500).json({ success: false, error: 'Failed to save tab' });
-    }
-  } else {
-    // Fallback to memory (not persistent)
+  try {
+    await db.execute(
+      'INSERT INTO user_configs (discord_id, tab_name, code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE code = ?, updated_at = CURRENT_TIMESTAMP',
+      [discordId, name, code, code]
+    );
     res.json({ success: true });
+  } catch (err) {
+    console.error('Error saving tab:', err);
+    res.status(500).json({ success: false, error: 'Failed to save tab' });
   }
 });
 
@@ -391,19 +330,15 @@ app.post('/api/tabs/delete', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Name required' });
   }
   
-  if (useMySQL) {
-    try {
-      await db.execute(
-        'DELETE FROM user_configs WHERE discord_id = ? AND tab_name = ?',
-        [discordId, name]
-      );
-      res.json({ success: true });
-    } catch (err) {
-      console.error('Error deleting tab:', err);
-      res.status(500).json({ success: false, error: 'Failed to delete tab' });
-    }
-  } else {
+  try {
+    await db.execute(
+      'DELETE FROM user_configs WHERE discord_id = ? AND tab_name = ?',
+      [discordId, name]
+    );
     res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting tab:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete tab' });
   }
 });
 
@@ -423,67 +358,34 @@ app.post('/api/tabs/set', async (req, res) => {
 app.post('/api/turnstile/verify', async (req, res) => {
   const { token } = req.body;
   
-  console.log('Turnstile verify request received, token present:', !!token);
-  
   if (!token) {
-    console.log('Turnstile verify: No token provided');
     return res.status(400).json({ success: false, error: 'Token required' });
   }
   
   if (!TURNSTILE_SECRET_KEY) {
-    console.log('Turnstile verify: No secret key configured, skipping verification');
+    // If no secret key configured, skip verification (for development)
     return res.json({ success: true });
   }
   
   try {
-    console.log('Turnstile verify: Sending request to Cloudflare...');
-    
-    // Use node-fetch or built-in https
-    const https = require('https');
-    const querystring = require('querystring');
-    
-    const postData = querystring.stringify({
-      secret: TURNSTILE_SECRET_KEY,
-      response: token
-    });
-    
-    const options = {
-      hostname: 'challenges.cloudflare.com',
-      path: '/turnstile/v0/siteverify',
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': postData.length
-      }
-    };
-    
-    const requestPromise = new Promise((resolve, reject) => {
-      const request = https.request(options, (response) => {
-        let data = '';
-        response.on('data', (chunk) => data += chunk);
-        response.on('end', () => resolve(data));
-      });
-      
-      request.on('error', (err) => reject(err));
-      request.write(postData);
-      request.end();
+      },
+      body: `secret=${encodeURIComponent(TURNSTILE_SECRET_KEY)}&response=${encodeURIComponent(token)}`,
     });
     
-    const responseData = await requestPromise;
-    const result = JSON.parse(responseData);
-    
-    console.log('Turnstile verify: Cloudflare response:', result);
+    const result = await response.json();
     
     if (result.success) {
-      console.log('Turnstile verify: SUCCESS');
       res.json({ success: true });
     } else {
-      console.log('Turnstile verify: FAILED -', result['error-codes']);
-      res.status(400).json({ success: false, error: 'Verification failed', details: result['error-codes'] });
+      res.status(400).json({ success: false, error: 'Verification failed' });
     }
   } catch (err) {
     console.error('Turnstile verification error:', err);
-    res.status(500).json({ success: false, error: 'Verification error', details: err.message });
+    res.status(500).json({ success: false, error: 'Verification error' });
   }
 });
 
@@ -494,26 +396,22 @@ app.get('/api/tabs', async (req, res) => {
   }
   
   const discordId = req.user.id;
-  console.log('Loading tabs for user:', discordId, 'using MySQL:', useMySQL);
+  console.log('Loading tabs for user:', discordId);
   
-  if (useMySQL) {
-    try {
-      const [rows] = await db.execute(
-        'SELECT tab_name, code FROM user_configs WHERE discord_id = ? ORDER BY updated_at DESC',
-        [discordId]
-      );
-      console.log('Tabs loaded from database:', rows.length, 'tabs');
-      rows.forEach(row => {
-        console.log('Tab:', row.tab_name, 'Code length:', row.code ? row.code.length : 0);
-      });
-      const tabs = rows.map(row => ({ name: row.tab_name, code: row.code }));
-      res.json({ success: true, tabs });
-    } catch (err) {
-      console.error('Error loading tabs:', err);
-      res.status(500).json({ success: false, error: 'Failed to load tabs' });
-    }
-  } else {
-    res.json({ success: true, tabs: [] });
+  try {
+    const [rows] = await db.execute(
+      'SELECT tab_name, code FROM user_configs WHERE discord_id = ? ORDER BY updated_at DESC',
+      [discordId]
+    );
+    console.log('Tabs loaded from database:', rows.length, 'tabs');
+    rows.forEach(row => {
+      console.log('Tab:', row.tab_name, 'Code length:', row.code ? row.code.length : 0);
+    });
+    const tabs = rows.map(row => ({ name: row.tab_name, code: row.code }));
+    res.json({ success: true, tabs });
+  } catch (err) {
+    console.error('Error loading tabs:', err);
+    res.status(500).json({ success: false, error: 'Failed to load tabs' });
   }
 });
 
@@ -527,7 +425,7 @@ async function startServer() {
   await initDB();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log('Admins are stored in database (MySQL) or JSON file');
+    console.log(`Admin IDs: ${ADMIN_IDS.join(', ')}`);
     console.log('Make sure to set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET environment variables');
   });
 }
