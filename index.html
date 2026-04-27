@@ -578,19 +578,17 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
           </div>
         </div>
 
-        <!-- Data Settings -->
+        <!-- Config Settings -->
         <div class="settings_section">
-          <h3>data</h3>
+          <h3>config</h3>
           <div class="setting_row">
             <div class="dropdown">
-              <button class="settings_btn dropdown_btn" onclick="toggle_export_dropdown()">export configs ▼</button>
+              <button class="settings_btn dropdown_btn" onclick="toggle_export_dropdown()">export</button>
               <div id="export_dropdown" class="dropdown_menu" style="display:none">
                 <div class="dropdown_item" onclick="export_config('all')">all configs</div>
               </div>
             </div>
-          </div>
-          <div class="setting_row">
-            <button class="settings_btn" onclick="document.getElementById('import_file').click()">import configs</button>
+            <button class="settings_btn" onclick="document.getElementById('import_file').click()">import</button>
             <input type="file" id="import_file" accept=".json" style="display:none" onchange="import_configs(this)">
           </div>
         </div>
