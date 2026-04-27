@@ -669,7 +669,7 @@ function open_view_modal(config) {
   if (config.has_password) {
     const locked = document.createElement("div");
     locked.className = "view_preview_locked";
-    locked.textContent = "shared.coach = {\n    ['Main'] = { ... },\n    ['Combat'] = { ... },\n    ['Tools'] = { ... },\n    ['Character'] = { ... },\n    ['Visuals'] = { ... },\n    ['No Jump Cooldown'] = { ... },\n}";
+    locked.textContent = "warn(\"wowzaa\"";
     prev_el.innerHTML = ""; prev_el.appendChild(locked);
   } else { prev_el.textContent = "loading&hellip;"; fetch_view_preview(config.id); }
 
