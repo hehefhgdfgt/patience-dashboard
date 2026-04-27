@@ -564,7 +564,7 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
           <h3>editor</h3>
           <div class="setting_row">
             <label>font size</label>
-            <input type="range" id="font_size_slider" min="10" max="20" value="13" onchange="update_font_size(this.value)">
+            <input type="range" id="font_size_slider" min="10" max="20" value="13" oninput="update_font_size(this.value)">
             <span id="font_size_value">13px</span>
           </div>
         </div>
@@ -1145,15 +1145,42 @@ function update_font_size(size) {
 }
 
 function export_configs() {
-  const data = { configs: tabs, exported_at: new Date().toISOString() };
+  if (tabs.length === 0) {
+    show_toast("no configs to export", "error");
+    return;
+  }
+  
+  // Build config list for prompt
+  const configList = tabs.map((t, i) => `${i + 1}. ${t.name}`).join("\n");
+  const input = prompt(`enter config number to export:\n\n${configList}\n\n(or type "all" for all configs)`);
+  
+  if (!input) return;
+  
+  let configsToExport;
+  let filename;
+  
+  if (input.toLowerCase() === "all") {
+    configsToExport = tabs;
+    filename = `coach_configs_${new Date().toISOString().split("T")[0]}.json`;
+  } else {
+    const index = parseInt(input) - 1;
+    if (isNaN(index) || index < 0 || index >= tabs.length) {
+      show_toast("invalid config number", "error");
+      return;
+    }
+    configsToExport = [tabs[index]];
+    filename = `coach_config_${tabs[index].name}_${new Date().toISOString().split("T")[0]}.json`;
+  }
+  
+  const data = { configs: configsToExport, exported_at: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `coach_configs_${new Date().toISOString().split("T")[0]}.json`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  show_toast("configs exported", "success");
+  show_toast(input.toLowerCase() === "all" ? "all configs exported" : "config exported", "success");
 }
 
 async function import_configs(input) {
