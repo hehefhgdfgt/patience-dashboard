@@ -314,6 +314,9 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
 /* Editor Area */
 .ide_editor_area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.ide_editor_header{height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#0d0d0f;border-bottom:1px solid var(--border)}
+.ide_set_btn{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;cursor:pointer;transition:all 0.2s}
+.ide_set_btn:hover{background:rgba(16,185,129,0.25)}
 .ide_tabs_bar{height:35px;flex-shrink:0;display:none;align-items:center;background:#0d0d0f;border-bottom:1px solid var(--border);overflow-x:auto;overflow-y:hidden}
 .ide_tabs_bar::-webkit-scrollbar{height:0}
 .ide_tab{display:flex;align-items:center;gap:8px;padding:0 14px;height:35px;border-right:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all 0.15s;position:relative;background:transparent;border:none}
@@ -538,9 +541,10 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
       <!-- Editor Area -->
       <div class="ide_editor_area">
-        <!-- Top Bar with Set Button -->
-        <div style="position:absolute;top:12px;right:12px;z-index:10">
-          <button class="ide_status_btn" onclick="do_set()" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:#6ee7b7;padding:8px 20px;font-size:14px">set</button>
+        <!-- Top Bar -->
+        <div class="ide_editor_header">
+          <span id="current_config_name" style="color:var(--muted)">no config selected</span>
+          <button class="ide_set_btn" onclick="do_set()">set</button>
         </div>
         
         <!-- Monaco Editor Container -->
@@ -550,9 +554,7 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
         <!-- Bottom Status Bar -->
         <div class="ide_status_bar">
-          <div class="ide_status_left">
-            <span id="save_status">saved</span>
-          </div>
+          <span id="save_status">saved</span>
         </div>
       </div>
     </div>
@@ -1196,6 +1198,8 @@ function switch_tab(name) {
   console.log('Setting active_tab to:', name, 'tab found:', !!t);
   if (t&&editor_ready) { editor.setValue(t.code); set_dirty(false); }
   render_tabs(name);
+  const nameEl = document.getElementById("current_config_name");
+  if (nameEl) nameEl.textContent = name;
   console.log('switch_tab complete, active_tab is now:', active_tab);
 }
 async function add_tab() {
@@ -1344,6 +1348,8 @@ async function add_tab() {
   console.log('Tab saved to server');
   render_file_tree();
   render_tabs(name); if(editor_ready){editor.setValue(defaultConfig);set_dirty(false);} active_tab=name;
+  const nameEl = document.getElementById("current_config_name");
+  if (nameEl) nameEl.textContent = name;
   console.log('Tab rendered and activated');
 }
 async function delete_tab(name) {
