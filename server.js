@@ -379,6 +379,37 @@ app.get('/api/tabs', async (req, res) => {
   }
 });
 
+// API: Reset all configs (admin only)
+app.post('/api/admin/reset-configs', async (req, res) => {
+  if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
+    return res.status(403).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  const defaultCode = 'warn("wowzaa")';
+  
+  try {
+    // Delete all existing configs
+    await db.execute('DELETE FROM user_configs');
+    
+    // Get all whitelisted users
+    const [whitelistRows] = await db.execute('SELECT discord_id FROM whitelist');
+    
+    // Insert default config for each user
+    for (const user of whitelistRows) {
+      await db.execute(
+        'INSERT INTO user_configs (discord_id, tab_name, code) VALUES (?, ?, ?)',
+        [user.discord_id, 'config', defaultCode]
+      );
+    }
+    
+    console.log('All configs reset to default by admin:', req.user.id);
+    res.json({ success: true, message: 'All configs reset to default' });
+  } catch (err) {
+    console.error('Error resetting configs:', err);
+    res.status(500).json({ success: false, error: 'Failed to reset configs' });
+  }
+});
+
 // Serve the frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
