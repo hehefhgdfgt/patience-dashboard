@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1497815572015218871';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'JnvjqcBpMF7tMqDoQzUxv4Soifu9lDjz';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'patience-secret-key-change-in-production';
-const ADMIN_ID = '903808042355806239';
+const ADMIN_IDS = ['903808042355806239', '586722125289619482'];
 
 // MySQL Connection - uses Railway's MYSQL_URL
 const MYSQL_URL = process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
@@ -27,19 +27,18 @@ const WHITELIST_FILE = path.join(__dirname, 'whitelist.json');
 // Initialize JSON whitelist file if it doesn't exist
 if (!fs.existsSync(WHITELIST_FILE)) {
   fs.writeFileSync(WHITELIST_FILE, JSON.stringify({
-    admin: ADMIN_ID,
-    users: [ADMIN_ID]
+    admin: ADMIN_IDS[0],
+    users: ADMIN_IDS
   }, null, 2));
 }
 
 // Load whitelist from JSON
 function loadWhitelist() {
-  try {
-    const data = fs.readFileSync(WHITELIST_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (err) {
-    return { admin: ADMIN_ID, users: [ADMIN_ID] };
+  if (fs.existsSync(WHITELIST_FILE)) {
+    const data = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf8'));
+    return data;
   }
+  return { admin: ADMIN_IDS[0], users: ADMIN_IDS };
 }
 
 // Save whitelist to JSON
@@ -81,11 +80,13 @@ async function initDB() {
       )
     `);
     
-    // Insert admin if not exists
-    await db.execute(
-      'INSERT IGNORE INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
-      [ADMIN_ID, 'admin', 'system']
-    );
+    // Insert admins if not exists
+    for (const adminId of ADMIN_IDS) {
+      await db.execute(
+        'INSERT IGNORE INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
+        [adminId, 'admin', 'system']
+      );
+    }
     
     console.log('Database initialized');
   } catch (err) {
@@ -107,14 +108,14 @@ async function isWhitelisted(discordId) {
 
 // Check if user is admin
 function isAdmin(discordId) {
-  return discordId === ADMIN_ID;
+  return ADMIN_IDS.includes(discordId);
 }
 
 // Get all whitelisted users
 async function getWhitelist() {
   if (useMySQL) {
     const [rows] = await db.execute('SELECT * FROM whitelist ORDER BY added_at DESC');
-    return { admin: ADMIN_ID, users: rows };
+    return { admin: ADMIN_IDS[0], users: rows };
   } else {
     return loadWhitelist();
   }
@@ -144,7 +145,7 @@ async function addToWhitelist(discordId, username, addedBy) {
 
 // Remove user from whitelist
 async function removeFromWhitelist(discordId) {
-  if (discordId === ADMIN_ID) return false; // Can't remove admin
+  if (ADMIN_IDS.includes(discordId)) return false; // Can't remove admin
   
   if (useMySQL) {
     try {
@@ -323,7 +324,7 @@ app.post('/api/admin/whitelist/remove', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Discord ID required' });
   }
   
-  if (discord_id === ADMIN_ID) {
+  if (ADMIN_IDS.includes(discord_id)) {
     return res.status(400).json({ success: false, error: 'Cannot remove admin' });
   }
   
@@ -452,7 +453,7 @@ async function startServer() {
   await initDB();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Admin ID: ${ADMIN_ID}`);
+    console.log(`Admin IDs: ${ADMIN_IDS.join(', ')}`);
     console.log('Make sure to set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET environment variables');
   });
 }
