@@ -338,6 +338,9 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 .settings_btn:hover{background:var(--bg4);border-color:var(--border2)}
 .settings_btn.logout_btn{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171}
 .settings_btn.logout_btn:hover{background:rgba(248,113,113,0.2)}
+.settings_select{flex:1;max-width:200px;padding:10px 12px;border-radius:8px;font-size:13px;background:var(--bg3);border:1px solid var(--border);color:var(--text);cursor:pointer;outline:none;transition:all 0.2s}
+.settings_select:hover{border-color:var(--border2)}
+.settings_select:focus{border-color:var(--accent)}
 
 /* Admin Panel */
 .ide_admin_layout{flex:1;overflow-y:auto;padding:28px;background:var(--bg)}
@@ -573,7 +576,12 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
         <div class="settings_section">
           <h3>data</h3>
           <div class="setting_row">
-            <button class="settings_btn" onclick="export_configs()">export configs</button>
+            <select id="export_config_select" class="settings_select">
+              <option value="all">all configs</option>
+            </select>
+            <button class="settings_btn" onclick="export_selected_config()">export</button>
+          </div>
+          <div class="setting_row">
             <button class="settings_btn" onclick="document.getElementById('import_file').click()">import configs</button>
             <input type="file" id="import_file" accept=".json" style="display:none" onchange="import_configs(this)">
           </div>
@@ -921,6 +929,7 @@ function make_av_fallback(n) { const el=document.createElement("div"); el.classN
 function render_tabs(activate) {
   console.log('render_tabs called with activate:', activate, 'active_tab:', active_tab);
   render_file_tree();
+  update_export_dropdown();
   if (activate) active_tab = activate;
   console.log('render_tabs complete, active_tab is now:', active_tab);
 }
@@ -1144,32 +1153,29 @@ function update_font_size(size) {
   localStorage.setItem("editor_font_size", size);
 }
 
-function export_configs() {
+function export_selected_config() {
+  const select = document.getElementById("export_config_select");
+  const selected = select.value;
+  
   if (tabs.length === 0) {
     show_toast("no configs to export", "error");
     return;
   }
   
-  // Build config list for prompt
-  const configList = tabs.map((t, i) => `${i + 1}. ${t.name}`).join("\n");
-  const input = prompt(`enter config number to export:\n\n${configList}\n\n(or type "all" for all configs)`);
-  
-  if (!input) return;
-  
   let configsToExport;
   let filename;
   
-  if (input.toLowerCase() === "all") {
+  if (selected === "all") {
     configsToExport = tabs;
     filename = `coach_configs_${new Date().toISOString().split("T")[0]}.json`;
   } else {
-    const index = parseInt(input) - 1;
-    if (isNaN(index) || index < 0 || index >= tabs.length) {
-      show_toast("invalid config number", "error");
+    const config = tabs.find(t => t.name === selected);
+    if (!config) {
+      show_toast("config not found", "error");
       return;
     }
-    configsToExport = [tabs[index]];
-    filename = `coach_config_${tabs[index].name}_${new Date().toISOString().split("T")[0]}.json`;
+    configsToExport = [config];
+    filename = `coach_config_${config.name}_${new Date().toISOString().split("T")[0]}.json`;
   }
   
   const data = { configs: configsToExport, exported_at: new Date().toISOString() };
@@ -1180,7 +1186,27 @@ function export_configs() {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  show_toast(input.toLowerCase() === "all" ? "all configs exported" : "config exported", "success");
+  show_toast(selected === "all" ? "all configs exported" : "config exported", "success");
+}
+
+function update_export_dropdown() {
+  const select = document.getElementById("export_config_select");
+  if (!select) return;
+  
+  const currentSelection = select.value;
+  select.innerHTML = '<option value="all">all configs</option>';
+  
+  tabs.forEach(t => {
+    const option = document.createElement("option");
+    option.value = t.name;
+    option.textContent = t.name;
+    select.appendChild(option);
+  });
+  
+  // Restore selection if it still exists
+  if (tabs.find(t => t.name === currentSelection)) {
+    select.value = currentSelection;
+  }
 }
 
 async function import_configs(input) {
