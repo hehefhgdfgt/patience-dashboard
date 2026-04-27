@@ -583,6 +583,7 @@ app.post('/api/scripts/:name/execute', async (req, res) => {
 });
 
 // API: Create execution command in MongoDB (for Roblox polling)
+// Trigger rebuild
 app.post('/api/execute', async (req, res) => {
   console.log('[EXECUTE] Request received');
   
