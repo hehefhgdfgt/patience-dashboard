@@ -580,7 +580,7 @@ app.post('/api/scripts/:name/execute', async (req, res) => {
   }
 });
 
-// API: Execute Lua code to Roblox via WebSocket (IP-based matching)
+// API: Create execution command in MongoDB (for Roblox polling)
 app.post('/api/execute', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -591,17 +591,80 @@ app.post('/api/execute', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Code required' });
   }
   
-  // Get the user's IP from the request
+  // Get the user's IP
   const userIP = getClientIP(req);
-  console.log(`Execute request from IP: ${userIP}`);
+  console.log(`Creating execution command for IP: ${userIP}`);
   
-  // Try to broadcast via WebSocket to connected Roblox client with same IP
-  const sent = broadcastToIP(userIP, code);
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
   
-  if (sent) {
-    res.json({ success: true, message: 'Code sent to Roblox client', ip: userIP });
-  } else {
-    res.status(404).json({ success: false, error: 'No Roblox client connected from your IP', ip: userIP });
+  try {
+    // Create a unique command name with timestamp
+    const commandName = `exec_${req.user.id}_${Date.now()}`;
+    
+    await scriptsCollection.insertOne({
+      name: commandName,
+      type: 'execution_command',
+      code: code,
+      userId: req.user.id,
+      ip: userIP,
+      executed: false,
+      createdAt: new Date()
+    });
+    
+    res.json({ success: true, message: 'Command created for execution', commandName, ip: userIP });
+  } catch (err) {
+    console.error('Error creating execution command:', err);
+    res.status(500).json({ success: false, error: 'Failed to create command' });
+  }
+});
+
+// API: Get pending execution commands (for Roblox poller)
+app.get('/api/commands/pending', async (req, res) => {
+  // Get client IP
+  const clientIP = getClientIP(req);
+  console.log(`Pending commands request from IP: ${clientIP}`);
+  
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
+  
+  try {
+    // Find commands for this IP that haven't been executed
+    const commands = await scriptsCollection.find({
+      type: 'execution_command',
+      ip: clientIP,
+      executed: false
+    }).toArray();
+    
+    res.json({
+      success: true,
+      commands: commands.map(cmd => ({
+        name: cmd.name,
+        code: cmd.code,
+        createdAt: cmd.createdAt
+      }))
+    });
+  } catch (err) {
+    console.error('Error fetching pending commands:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch commands' });
+  }
+});
+
+// API: Mark command as executed (Roblox calls this after execution)
+app.post('/api/commands/:name/executed', async (req, res) => {
+  if (!scriptsCollection) {
+    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+  }
+  
+  try {
+    // Delete the command after execution (or mark as executed)
+    await scriptsCollection.deleteOne({ name: req.params.name });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting executed command:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete command' });
   }
 });
 
