@@ -601,8 +601,11 @@ app.post('/api/execute', async (req, res) => {
   console.log(`[EXECUTE] User: ${req.user.id}, IP: ${userIP}`);
   
   if (!scriptsCollection) {
-    console.log('[EXECUTE] ERROR: MongoDB not connected');
-    return res.status(503).json({ success: false, error: 'MongoDB not connected' });
+    console.log('[EXECUTE] ERROR: MongoDB not connected - SET MONGODB_URL in Railway!');
+    return res.status(503).json({ 
+      success: false, 
+      error: 'MongoDB not connected. Please set MONGODB_URL environment variable in Railway.' 
+    });
   }
   
   try {
@@ -627,7 +630,7 @@ app.post('/api/execute', async (req, res) => {
     res.json({ success: true, message: 'Command created for execution', commandName, ip: userIP });
   } catch (err) {
     console.error('[EXECUTE] ERROR:', err);
-    res.status(500).json({ success: false, error: 'Failed to create command' });
+    res.status(500).json({ success: false, error: 'Failed to create command', details: err.message });
   }
 });
 
