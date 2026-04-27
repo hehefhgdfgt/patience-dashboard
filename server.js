@@ -580,7 +580,7 @@ app.post('/api/scripts/:name/execute', async (req, res) => {
   }
 });
 
-// API: Execute Lua code to Roblox via WebSocket
+// API: Execute Lua code to Roblox via WebSocket (IP-based matching)
 app.post('/api/execute', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -591,15 +591,17 @@ app.post('/api/execute', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Code required' });
   }
   
-  const userId = req.user.id;
+  // Get the user's IP from the request
+  const userIP = getClientIP(req);
+  console.log(`Execute request from IP: ${userIP}`);
   
-  // Try to broadcast via WebSocket to connected Roblox client
-  const sent = broadcastToUser(userId, code);
+  // Try to broadcast via WebSocket to connected Roblox client with same IP
+  const sent = broadcastToIP(userIP, code);
   
   if (sent) {
-    res.json({ success: true, message: 'Code sent to Roblox client' });
+    res.json({ success: true, message: 'Code sent to Roblox client', ip: userIP });
   } else {
-    res.status(404).json({ success: false, error: 'No Roblox client connected for this user' });
+    res.status(404).json({ success: false, error: 'No Roblox client connected from your IP', ip: userIP });
   }
 });
 
@@ -610,33 +612,35 @@ app.get('/', (req, res) => {
 
 // WebSocket server for Roblox clients
 let wss;
-const connectedClients = new Map(); // userId -> ws
+const connectedClients = new Map(); // ip -> ws
+
+function getClientIP(req) {
+  // Get real IP from various headers (Railway/Cloudflare/proxy)
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+         req.headers['x-real-ip'] ||
+         req.connection?.remoteAddress ||
+         req.socket?.remoteAddress ||
+         'unknown';
+}
 
 function initWebSocketServer(server) {
   wss = new WebSocket.Server({ server, path: '/ws' });
   
   wss.on('connection', (ws, req) => {
-    console.log('New WebSocket connection from Roblox client');
+    const clientIP = getClientIP(req);
+    console.log(`New WebSocket connection from IP: ${clientIP}`);
     
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message);
-        if (data.type === 'auth' && data.userId) {
-          connectedClients.set(data.userId, ws);
-          console.log(`Roblox client authenticated: ${data.userId}`);
-          ws.send(JSON.stringify({ type: 'auth_success' }));
-        }
-      } catch (err) {
-        console.error('Invalid WebSocket message:', err);
-      }
-    });
+    // Store connection by IP
+    connectedClients.set(clientIP, ws);
+    console.log(`Roblox client connected from IP: ${clientIP}`);
+    ws.send(JSON.stringify({ type: 'auth_success', ip: clientIP }));
     
     ws.on('close', () => {
-      // Remove disconnected client
-      for (const [userId, client] of connectedClients.entries()) {
+      // Remove disconnected client by IP
+      for (const [ip, client] of connectedClients.entries()) {
         if (client === ws) {
-          connectedClients.delete(userId);
-          console.log(`Roblox client disconnected: ${userId}`);
+          connectedClients.delete(ip);
+          console.log(`Roblox client disconnected: ${ip}`);
           break;
         }
       }
@@ -650,9 +654,9 @@ function initWebSocketServer(server) {
   console.log('WebSocket server initialized on /ws');
 }
 
-// Function to broadcast code to a specific user
-function broadcastToUser(userId, code) {
-  const ws = connectedClients.get(userId);
+// Function to broadcast code to a specific IP
+function broadcastToIP(ip, code) {
+  const ws = connectedClients.get(ip);
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: 'execute', code }));
     return true;
