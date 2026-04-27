@@ -7,6 +7,8 @@ const path = require('path');
 const fs = require('fs');
 const mysql = require('mysql2/promise');
 const { MongoClient } = require('mongodb');
+const WebSocket = require('ws');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -578,7 +580,7 @@ app.post('/api/scripts/:name/execute', async (req, res) => {
   }
 });
 
-// API: Execute Lua code to Roblox
+// API: Execute Lua code to Roblox via WebSocket
 app.post('/api/execute', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -589,30 +591,15 @@ app.post('/api/execute', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Code required' });
   }
   
-  // Get Roblox executor API URL from environment
-  const ROBLOX_EXECUTOR_URL = process.env.ROBLOX_EXECUTOR_URL;
+  const userId = req.user.id;
   
-  if (!ROBLOX_EXECUTOR_URL) {
-    return res.status(503).json({ success: false, error: 'Roblox executor not configured' });
-  }
+  // Try to broadcast via WebSocket to connected Roblox client
+  const sent = broadcastToUser(userId, code);
   
-  try {
-    const fetch = (await import('node-fetch')).default;
-    const response = await fetch(ROBLOX_EXECUTOR_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code: code,
-        user: req.user.id,
-        timestamp: Date.now()
-      })
-    });
-    
-    const result = await response.json();
-    res.json({ success: true, result });
-  } catch (err) {
-    console.error('Error executing to Roblox:', err);
-    res.status(500).json({ success: false, error: 'Failed to execute script to Roblox' });
+  if (sent) {
+    res.json({ success: true, message: 'Code sent to Roblox client' });
+  } else {
+    res.status(404).json({ success: false, error: 'No Roblox client connected for this user' });
   }
 });
 
@@ -621,12 +608,69 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// WebSocket server for Roblox clients
+let wss;
+const connectedClients = new Map(); // userId -> ws
+
+function initWebSocketServer(server) {
+  wss = new WebSocket.Server({ server, path: '/ws' });
+  
+  wss.on('connection', (ws, req) => {
+    console.log('New WebSocket connection from Roblox client');
+    
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message);
+        if (data.type === 'auth' && data.userId) {
+          connectedClients.set(data.userId, ws);
+          console.log(`Roblox client authenticated: ${data.userId}`);
+          ws.send(JSON.stringify({ type: 'auth_success' }));
+        }
+      } catch (err) {
+        console.error('Invalid WebSocket message:', err);
+      }
+    });
+    
+    ws.on('close', () => {
+      // Remove disconnected client
+      for (const [userId, client] of connectedClients.entries()) {
+        if (client === ws) {
+          connectedClients.delete(userId);
+          console.log(`Roblox client disconnected: ${userId}`);
+          break;
+        }
+      }
+    });
+    
+    ws.on('error', (err) => {
+      console.error('WebSocket error:', err);
+    });
+  });
+  
+  console.log('WebSocket server initialized on /ws');
+}
+
+// Function to broadcast code to a specific user
+function broadcastToUser(userId, code) {
+  const ws = connectedClients.get(userId);
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'execute', code }));
+    return true;
+  }
+  return false;
+}
+
 // Start server after DB connection
 async function startServer() {
   await initDB();
   await initMongoDB();
-  app.listen(PORT, () => {
+  
+  const server = http.createServer(app);
+  initWebSocketServer(server);
+  
+  server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`WebSocket server running on ws://localhost:${PORT}/ws`);
     console.log(`Admin IDs: ${ADMIN_IDS.join(', ')}`);
     console.log('Make sure to set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET environment variables');
   });
