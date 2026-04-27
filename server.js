@@ -151,10 +151,12 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false,
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+    secure: true, // Always true for Railway (HTTPS)
+    sameSite: 'none', // Required for HTTPS
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true
+  },
+  name: 'coachtopia.sid'
 }));
 app.use(passport.initialize());
 app.use(passport.session());
