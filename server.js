@@ -21,7 +21,7 @@ const ADMIN_IDS = ['903808042355806239', '586722125289619482'];
 const MYSQL_URL = process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
 let db;
 
-const MONGODB_URL = process.env.MONGODB_URL || 'mongodb:
+const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017/coachtopia';
 let mongoClient;
 let scriptsCollection;
 
