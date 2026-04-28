@@ -734,8 +734,7 @@ app.get('/api/loader', async (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   console.log('[LOADER] Request for loader script');
   
-  const loaderScript = `SCRIPT_KEY = "keyless"
-loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/1dc96643ea690cb216557c5b3ae4e94206849fd81ae27f546f46235ad2912c38/download"))()`;
+  const loaderScript = `loadstring(game:HttpGet("https://pastebin.com/raw/5BVf6JHn"))()`;
   
   res.json({ success: true, code: loaderScript });
 });
