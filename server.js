@@ -13,22 +13,18 @@ const http = require('http');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuration - UPDATE THESE WITH YOUR DISCORD BOT CREDENTIALS
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1497815572015218871';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'JnvjqcBpMF7tMqDoQzUxv4Soifu9lDjz';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'patience-secret-key-change-in-production';
 const ADMIN_IDS = ['903808042355806239', '586722125289619482'];
 
-// MySQL Connection - uses Railway's MYSQL_URL
 const MYSQL_URL = process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
 let db;
 
-// MongoDB Connection
-const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017/coachtopia';
+const MONGODB_URL = process.env.MONGODB_URL || 'mongodb:
 let mongoClient;
 let scriptsCollection;
 
-// Initialize MySQL connection (required)
 async function initDB() {
   if (!MYSQL_URL) {
     console.error('MYSQL_URL is required. Please set the MYSQL_URL environment variable.');
@@ -38,8 +34,7 @@ async function initDB() {
   try {
     db = await mysql.createConnection(MYSQL_URL);
     console.log('MySQL connected successfully');
-    
-    // Create whitelist table if not exists
+
     await db.execute(`
       CREATE TABLE IF NOT EXISTS whitelist (
         discord_id VARCHAR(255) PRIMARY KEY,
@@ -48,8 +43,7 @@ async function initDB() {
         added_by VARCHAR(255)
       )
     `);
-    
-    // Create user_configs table if not exists
+
     await db.execute(`
       CREATE TABLE IF NOT EXISTS user_configs (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -60,8 +54,7 @@ async function initDB() {
         UNIQUE KEY unique_tab (discord_id, tab_name)
       )
     `);
-    
-    // Insert admins if not exists
+
     for (const adminId of ADMIN_IDS) {
       await db.execute(
         'INSERT IGNORE INTO whitelist (discord_id, username, added_by) VALUES (?, ?, ?)',
@@ -76,7 +69,6 @@ async function initDB() {
   }
 }
 
-// Initialize MongoDB connection
 async function initMongoDB() {
   try {
     mongoClient = new MongoClient(MONGODB_URL);
@@ -85,8 +77,7 @@ async function initMongoDB() {
     
     const db = mongoClient.db();
     scriptsCollection = db.collection('scripts');
-    
-    // Create index on name for faster queries
+
     await scriptsCollection.createIndex({ name: 1 }, { unique: true });
     
     console.log('MongoDB initialized');
@@ -96,24 +87,20 @@ async function initMongoDB() {
   }
 }
 
-// Check if user is whitelisted
 async function isWhitelisted(discordId) {
   const [rows] = await db.execute('SELECT discord_id FROM whitelist WHERE discord_id = ?', [discordId]);
   return rows.length > 0;
 }
 
-// Check if user is admin
 function isAdmin(discordId) {
   return ADMIN_IDS.includes(discordId);
 }
 
-// Get all whitelisted users
 async function getWhitelist() {
   const [rows] = await db.execute('SELECT * FROM whitelist ORDER BY added_at DESC');
   return { admin: ADMIN_IDS[0], users: rows };
 }
 
-// Add user to whitelist
 async function addToWhitelist(discordId, username, addedBy) {
   try {
     await db.execute(
@@ -127,9 +114,8 @@ async function addToWhitelist(discordId, username, addedBy) {
   }
 }
 
-// Remove user from whitelist
 async function removeFromWhitelist(discordId) {
-  if (ADMIN_IDS.includes(discordId)) return false; // Can't remove admin
+  if (ADMIN_IDS.includes(discordId)) return false; 
   
   try {
     await db.execute('DELETE FROM whitelist WHERE discord_id = ?', [discordId]);
@@ -140,21 +126,19 @@ async function removeFromWhitelist(discordId) {
   }
 }
 
-// Middleware
 app.use(cors({
   origin: true,
   credentials: true
 }));
 app.use(express.json());
 
-// Script loader configuration - this script will be loaded when user clicks "set"
-const SCRIPT_LOADER = `loadstring(game:HttpGet("https://pastebin.com/raw/5BVf6JHn"))()`;
+const SCRIPT_LOADER = `loadstring(game:HttpGet("https:
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
-  saveUninitialized: true, // Allow uninitialized sessions
+  saveUninitialized: true, 
   cookie: {
-    secure: false, // Try false first
+    secure: false, 
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: false
@@ -165,24 +149,23 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname)));
 
-// Passport Discord OAuth2 Strategy
 const PUBLIC_DOMAIN = process.env.RAILWAY_PUBLIC_DOMAIN || 'coach.fun';
-const CALLBACK_URL = `https://${PUBLIC_DOMAIN}/auth/discord/callback`;
+const CALLBACK_URL = `https:
 console.log('OAuth configured with callback URL:', CALLBACK_URL);
 
 passport.use('discord', new OAuth2Strategy({
-  authorizationURL: 'https://discord.com/oauth2/authorize',
-  tokenURL: 'https://discord.com/api/oauth2/token',
+  authorizationURL: 'https:
+  tokenURL: 'https:
   clientID: DISCORD_CLIENT_ID,
   clientSecret: DISCORD_CLIENT_SECRET,
   callbackURL: CALLBACK_URL,
   scope: ['identify']
 }, async (accessToken, refreshToken, params, profile, done) => {
-  // Fetch user info from Discord
+  
   try {
     console.log('OAuth callback received, fetching user info...');
     const fetch = (await import('node-fetch')).default;
-    const response = await fetch('https://discord.com/api/users/@me', {
+    const response = await fetch('https:
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
@@ -199,12 +182,8 @@ passport.use('discord', new OAuth2Strategy({
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
-// Routes
-
-// Discord OAuth2 login
 app.get('/auth/discord', passport.authenticate('discord'));
 
-// Discord OAuth2 callback
 app.get('/auth/discord/callback', 
   passport.authenticate('discord', { failureRedirect: '/?auth_error=cancelled' }),
   async (req, res) => {
@@ -220,7 +199,7 @@ app.get('/auth/discord/callback',
     const whitelisted = await isWhitelisted(discordId);
     if (!whitelisted) {
       console.log('User not whitelisted:', discordId);
-      // Destroy session and redirect with error
+      
       req.logout(() => res.redirect('/?auth_error=no_key'));
       return;
     }
@@ -230,14 +209,12 @@ app.get('/auth/discord/callback',
   }
 );
 
-// Logout
 app.get('/auth/logout', (req, res) => {
   req.logout(() => {
     res.redirect('/');
   });
 });
 
-// API: Get current user
 app.get('/api/auth/me', (req, res) => {
   console.log('Auth check - isAuthenticated:', req.isAuthenticated(), 'user:', req.user?.id);
   if (!req.isAuthenticated()) {
@@ -257,7 +234,6 @@ app.get('/api/auth/me', (req, res) => {
   });
 });
 
-// API: Get whitelist (admin only)
 app.get('/api/admin/whitelist', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -267,7 +243,6 @@ app.get('/api/admin/whitelist', async (req, res) => {
   res.json({ success: true, whitelist });
 });
 
-// API: Add user to whitelist (admin only)
 app.post('/api/admin/whitelist/add', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -294,7 +269,6 @@ app.post('/api/admin/whitelist/add', async (req, res) => {
   }
 });
 
-// API: Remove user from whitelist (admin only)
 app.post('/api/admin/whitelist/remove', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -320,7 +294,6 @@ app.post('/api/admin/whitelist/remove', async (req, res) => {
   }
 });
 
-// API: Save tab
 app.post('/api/tabs/save', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -348,7 +321,6 @@ app.post('/api/tabs/save', async (req, res) => {
   }
 });
 
-// API: Delete tab
 app.post('/api/tabs/delete', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -374,7 +346,6 @@ app.post('/api/tabs/delete', async (req, res) => {
   }
 });
 
-// API: Set active tab
 app.post('/api/tabs/set', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -386,7 +357,6 @@ app.post('/api/tabs/set', async (req, res) => {
   res.json({ success: true });
 });
 
-// API: Get tabs
 app.get('/api/tabs', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -412,7 +382,6 @@ app.get('/api/tabs', async (req, res) => {
   }
 });
 
-// API: Get all scripts (admin only)
 app.get('/api/scripts', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -431,7 +400,6 @@ app.get('/api/scripts', async (req, res) => {
   }
 });
 
-// API: Get single script
 app.get('/api/scripts/:name', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -453,7 +421,6 @@ app.get('/api/scripts/:name', async (req, res) => {
   }
 });
 
-// API: Create script
 app.post('/api/scripts', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -490,7 +457,6 @@ app.post('/api/scripts', async (req, res) => {
   }
 });
 
-// API: Update script
 app.put('/api/scripts/:name', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -530,7 +496,6 @@ app.put('/api/scripts/:name', async (req, res) => {
   }
 });
 
-// API: Delete script
 app.delete('/api/scripts/:name', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -554,7 +519,6 @@ app.delete('/api/scripts/:name', async (req, res) => {
   }
 });
 
-// API: Execute script
 app.post('/api/scripts/:name/execute', async (req, res) => {
   if (!req.isAuthenticated() || !isAdmin(req.user.id)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
@@ -569,9 +533,7 @@ app.post('/api/scripts/:name/execute', async (req, res) => {
     if (!script) {
       return res.status(404).json({ success: false, error: 'Script not found' });
     }
-    
-    // Execute the script using eval (WARNING: This is dangerous in production)
-    // In production, use a sandboxed environment like vm2 or a separate worker process
+
     let result;
     try {
       result = eval(script.code);
@@ -585,8 +547,6 @@ app.post('/api/scripts/:name/execute', async (req, res) => {
   }
 });
 
-// API: Create execution command in MongoDB (for Roblox polling)
-// Trigger rebuild
 app.post('/api/execute', async (req, res) => {
   console.log('[EXECUTE] Request received');
   
@@ -601,8 +561,7 @@ app.post('/api/execute', async (req, res) => {
   if (!code) {
     return res.status(400).json({ success: false, error: 'Code required' });
   }
-  
-  // Get the user's IP
+
   const userIP = getClientIP(req);
   console.log(`[EXECUTE] User: ${req.user.id}, IP: ${userIP}`);
   
@@ -615,7 +574,7 @@ app.post('/api/execute', async (req, res) => {
   }
   
   try {
-    // First, delete any old commands for this user/IP to ensure clean state
+    
     await scriptsCollection.deleteMany({
       type: 'execution_command',
       userId: req.user.id,
@@ -624,8 +583,7 @@ app.post('/api/execute', async (req, res) => {
     console.log(`[EXECUTE] Cleared old commands for user ${req.user.id}`);
     
     const timestamp = Date.now();
-    
-    // Create command for user's config code (sets up shared.coach)
+
     const configCommandName = `config_${req.user.id}_${timestamp}`;
     const configDoc = {
       name: configCommandName,
@@ -637,8 +595,7 @@ app.post('/api/execute', async (req, res) => {
       createdAt: new Date(),
       order: 1
     };
-    
-    // Create command for script loader (runs after config)
+
     const loaderCommandName = `loader_${req.user.id}_${timestamp}`;
     const loaderDoc = {
       name: loaderCommandName,
@@ -647,7 +604,7 @@ app.post('/api/execute', async (req, res) => {
       userId: req.user.id,
       ip: userIP,
       executed: false,
-      createdAt: new Date(Date.now() + 100), // Slightly later
+      createdAt: new Date(Date.now() + 100), 
       order: 2
     };
     
@@ -663,19 +620,16 @@ app.post('/api/execute', async (req, res) => {
   }
 });
 
-// API: Get pending execution commands (for Roblox poller)
 app.get('/api/commands/pending', async (req, res) => {
-  // Add CORS headers for Roblox
+  
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle preflight
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
-  // Get client IP
+
   const clientIP = getClientIP(req);
   console.log(`[POLL] Request from IP: ${clientIP}`);
   console.log(`[POLL] Headers:`, JSON.stringify(req.headers, null, 2));
@@ -686,7 +640,7 @@ app.get('/api/commands/pending', async (req, res) => {
   }
   
   try {
-    // Find commands for this IP that haven't been executed
+    
     const query = {
       type: 'execution_command',
       ip: clientIP,
@@ -696,15 +650,13 @@ app.get('/api/commands/pending', async (req, res) => {
     
     const commands = await scriptsCollection.find(query).toArray();
     console.log(`[POLL] Found ${commands.length} command(s) for IP ${clientIP}`);
-    
-    // Debug: show all pending commands in DB
+
     const allPending = await scriptsCollection.find({ type: 'execution_command', executed: false }).toArray();
     console.log(`[POLL] Total pending commands in DB: ${allPending.length}`);
     allPending.forEach(cmd => {
       console.log(`[POLL]   - ${cmd.name} (IP: ${cmd.ip})`);
     });
-    
-    // Delete commands immediately after fetching them
+
     if (commands.length > 0) {
       const commandNames = commands.map(cmd => cmd.name);
       await scriptsCollection.deleteMany({ name: { $in: commandNames } });
@@ -725,7 +677,6 @@ app.get('/api/commands/pending', async (req, res) => {
   }
 });
 
-// API: Get client IP for debugging
 app.get('/api/myip', async (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   const clientIP = getClientIP(req);
@@ -733,9 +684,8 @@ app.get('/api/myip', async (req, res) => {
   res.json({ success: true, ip: clientIP });
 });
 
-// API: Mark command as executed (Roblox calls this after execution)
 app.post('/api/commands/:name/executed', async (req, res) => {
-  // Add CORS headers
+  
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -752,7 +702,7 @@ app.post('/api/commands/:name/executed', async (req, res) => {
   }
   
   try {
-    // Delete the command after execution
+    
     await scriptsCollection.deleteOne({ name: req.params.name });
     console.log(`[EXECUTED] Deleted command ${req.params.name}`);
     res.json({ success: true });
@@ -762,17 +712,15 @@ app.post('/api/commands/:name/executed', async (req, res) => {
   }
 });
 
-// Serve the frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// WebSocket server for Roblox clients
 let wss;
-const connectedClients = new Map(); // ip -> ws
+const connectedClients = new Map(); 
 
 function getClientIP(req) {
-  // Get real IP from various headers (Railway/Cloudflare/proxy)
+  
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
          req.headers['x-real-ip'] ||
          req.connection?.remoteAddress ||
@@ -786,14 +734,13 @@ function initWebSocketServer(server) {
   wss.on('connection', (ws, req) => {
     const clientIP = getClientIP(req);
     console.log(`New WebSocket connection from IP: ${clientIP}`);
-    
-    // Store connection by IP
+
     connectedClients.set(clientIP, ws);
     console.log(`Roblox client connected from IP: ${clientIP}`);
     ws.send(JSON.stringify({ type: 'auth_success', ip: clientIP }));
     
     ws.on('close', () => {
-      // Remove disconnected client by IP
+      
       for (const [ip, client] of connectedClients.entries()) {
         if (client === ws) {
           connectedClients.delete(ip);
@@ -811,7 +758,6 @@ function initWebSocketServer(server) {
   console.log('WebSocket server initialized on /ws');
 }
 
-// Function to broadcast code to a specific IP
 function broadcastToIP(ip, code) {
   const ws = connectedClients.get(ip);
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -821,7 +767,6 @@ function broadcastToIP(ip, code) {
   return false;
 }
 
-// Start server after DB connection
 async function startServer() {
   await initDB();
   await initMongoDB();
@@ -830,8 +775,8 @@ async function startServer() {
   initWebSocketServer(server);
   
   server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`WebSocket server running on ws://localhost:${PORT}/ws`);
+    console.log(`Server running on http:
+    console.log(`WebSocket server running on ws:
     console.log(`Admin IDs: ${ADMIN_IDS.join(', ')}`);
     console.log('Make sure to set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET environment variables');
   });
