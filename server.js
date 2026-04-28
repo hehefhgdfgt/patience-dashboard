@@ -147,6 +147,23 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Security headers to prevent source viewing and copying
+app.use((req, res, next) => {
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  // Block view-source in modern browsers
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';");
+  // Disable caching to prevent saving pages
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  // Prevent browser features that expose source
+  res.setHeader('Permissions-Policy', 'view-source=(), document-domain=()');
+  next();
+});
+
 // Script loader configuration - this script will be loaded when user clicks "set"
 const SCRIPT_LOADER = `loadstring(game:HttpGet("https://pastebin.com/raw/5BVf6JHn"))()`;
 app.use(session({

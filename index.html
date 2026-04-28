@@ -108,6 +108,72 @@
       }
     };
   }
+  
+  // Block view-source protocol
+  if(window.location.protocol === 'view-source:'){
+    window.location.href = 'about:blank';
+  }
+  
+  // Prevent being loaded in iframe (clickjacking protection)
+  if(window.top !== window.self){
+    window.top.location = window.self.location;
+  }
+  
+  // Disable document.write after load
+  window.addEventListener('load', function(){
+    var originalWrite = document.write;
+    document.write = function(){
+      console.log('%cDocument.write blocked', 'color:red');
+      return;
+    };
+  });
+  
+  // Block fetch/XHR to this domain for viewing source
+  var originalFetch = window.fetch;
+  window.fetch = function(url, options){
+    if(typeof url === 'string' && url.indexOf(window.location.hostname) > -1 && url.indexOf('/api/') === -1){
+      console.log('%cFetch blocked for source protection', 'color:red');
+      return Promise.reject('Blocked');
+    }
+    return originalFetch.apply(this, arguments);
+  };
+  
+  // Block XMLHttpRequest for HTML
+  var originalXHR = window.XMLHttpRequest;
+  window.XMLHttpRequest = function(){
+    var xhr = new originalXHR();
+    var originalOpen = xhr.open;
+    xhr.open = function(method, url){
+      if(typeof url === 'string' && url.indexOf(window.location.hostname) > -1 && url.indexOf('/api/') === -1){
+        console.log('%cXHR blocked for source protection', 'color:red');
+        throw new Error('Blocked');
+      }
+      return originalOpen.apply(this, arguments);
+    };
+    return xhr;
+  };
+  
+  // Detect and block if user tries to use fetch/XHR to get page source
+  Object.defineProperty(window, 'XMLHttpRequest', {
+    writable: false,
+    configurable: false
+  });
+  
+  // Disable save as
+  document.addEventListener('beforeunload', function(e){
+    if(window.location.href.indexOf('view-source') > -1){
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+  
+  // Hide body content until JS loads (makes view-source show less)
+  document.documentElement.style.display = 'none';
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      document.documentElement.style.display = '';
+    }, 100);
+  });
 })();
 </script>
 <link href="css/css2" rel="stylesheet">
