@@ -80,8 +80,11 @@ while true do
                     else
                         print("[EXECUTE] Executing command:", cmd.name)
                         
-                        -- Mark this command as executed
+                        -- Mark this command as executed locally
                         executedCommands[cmd.name] = true
+                        
+                        -- Delete command from server immediately
+                        httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
                         
                         -- Execute the main script
                         local execSuccess, execErr = pcall(function()
@@ -93,9 +96,6 @@ while true do
                         else
                             warn("[EXECUTE] Main script failed:", execErr)
                         end
-                        
-                        -- Mark command as executed on server (deletes it)
-                        httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
                         
                         -- After main script, load and execute loader script
                         print("[LOADER] Fetching loader script...")
