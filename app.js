@@ -1283,7 +1283,7 @@ async function load_whitelist() {
     const data = await api_get("/admin/whitelist");
     if (!data.success) return;
     
-    whitelistData = data.whitelist;
+    whitelistData = data.whitelist.users;
     render_whitelist(whitelistData);
   } catch (err) {
     console.error("Failed to load whitelist:", err);
