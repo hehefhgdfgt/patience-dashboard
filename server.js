@@ -132,7 +132,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-const SCRIPT_LOADER = `loadstring(game:HttpGet("https:
+const SCRIPT_LOADER = `loadstring(game:HttpGet("https://pastebin.com/raw/5BVf6JHn"))()`;
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
@@ -150,12 +150,12 @@ app.use(passport.session());
 app.use(express.static(path.join(__dirname)));
 
 const PUBLIC_DOMAIN = process.env.RAILWAY_PUBLIC_DOMAIN || 'coach.fun';
-const CALLBACK_URL = `https:
+const CALLBACK_URL = `https://${PUBLIC_DOMAIN}/auth/discord/callback`;
 console.log('OAuth configured with callback URL:', CALLBACK_URL);
 
 passport.use('discord', new OAuth2Strategy({
-  authorizationURL: 'https:
-  tokenURL: 'https:
+  authorizationURL: 'https://discord.com/api/oauth2/authorize',
+  tokenURL: 'https://discord.com/api/oauth2/token',
   clientID: DISCORD_CLIENT_ID,
   clientSecret: DISCORD_CLIENT_SECRET,
   callbackURL: CALLBACK_URL,
@@ -165,7 +165,7 @@ passport.use('discord', new OAuth2Strategy({
   try {
     console.log('OAuth callback received, fetching user info...');
     const fetch = (await import('node-fetch')).default;
-    const response = await fetch('https:
+    const response = await fetch('https://discord.com/api/users/@me', {
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
