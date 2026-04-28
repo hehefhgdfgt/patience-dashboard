@@ -6,6 +6,141 @@
 <title>coach.fun</title>
 <script>
 (function(){
+  // === ANTI-WEBSITE CLONER PROTECTION ===
+  // Blocks tools like pixellize.com/website-clone, HTTrack, etc.
+  
+  // Detect headless browsers (Puppeteer, Playwright, Selenium)
+  var isHeadless = false;
+  
+  // Check for headless browser indicators
+  if(navigator.webdriver || window.navigator.webdriver){
+    isHeadless = true;
+  }
+  
+  // Check for missing plugins (headless browsers often have 0 plugins)
+  if(navigator.plugins && navigator.plugins.length === 0){
+    // Could be headless, but check other indicators too
+  }
+  
+  // Check for missing mimeTypes
+  if(navigator.mimeTypes && navigator.mimeTypes.length === 0){
+    isHeadless = true;
+  }
+  
+  // Check for PhantomJS, Nightmare, CasperJS
+  if(window.callPhantom || window._phantom || window.PHANTOMJS){
+    isHeadless = true;
+  }
+  
+  // Check for Selenium
+  if(window.selenium || window.callSelenium || document.documentElement.getAttribute('selenium-marker')){
+    isHeadless = true;
+  }
+  
+  // Check for __webdriver_script_fn (older ChromeDriver)
+  if(window.document.documentElement.getAttribute('webdriver')){
+    isHeadless = true;
+  }
+  
+  // Check user agent for automation tools
+  var ua = navigator.userAgent.toLowerCase();
+  var botPatterns = [
+    'headless', 'phantomjs', 'selenium', 'webdriver', 'puppeteer',
+    'playwright', 'crawler', 'spider', 'scraper', 'httrack',
+    'wget', 'curl', 'bot', 'automated'
+  ];
+  for(var i = 0; i < botPatterns.length; i++){
+    if(ua.indexOf(botPatterns[i]) > -1){
+      isHeadless = true;
+      break;
+    }
+  }
+  
+  // Check for automation properties
+  if(window.outerWidth === 0 && window.outerHeight === 0){
+    isHeadless = true;
+  }
+  
+  // Check if Chrome is headless via permissions API behavior
+  if(navigator.permissions){
+    navigator.permissions.query({name: 'notifications'}).then(function(permissionStatus){
+      // Headless Chrome might behave differently
+    }).catch(function(){
+      // Error could indicate headless
+    });
+  }
+  
+  // Canvas fingerprinting detection for automation
+  try{
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Test', 2, 2);
+    var data = canvas.toDataURL('image/png');
+    // Headless browsers often produce different canvas fingerprints
+  }catch(e){}
+  
+  // WebGL detection for headless
+  try{
+    var gl = document.createElement('canvas').getContext('webgl') || document.createElement('canvas').getContext('experimental-webgl');
+    if(gl){
+      var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      if(debugInfo){
+        var vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+        var renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        // Headless browsers often report Mesa or SwiftShader
+        if(vendor && (vendor.indexOf('Mesa') > -1 || vendor.indexOf('SwiftShader') > -1 || renderer.indexOf('SwiftShader') > -1)){
+          isHeadless = true;
+        }
+      }
+    }
+  }catch(e){}
+  
+  // If headless detected, show blank page or redirect
+  if(isHeadless){
+    document.documentElement.innerHTML = '<html><head><title>Access Denied</title></head><body style="background:#000;margin:0;"></body></html>';
+    return;
+  }
+  
+  // Dynamic content that breaks cloning - content changes every load
+  var dynamicElements = document.querySelectorAll('[data-dynamic]');
+  if(dynamicElements.length === 0){
+    // Add dynamic timestamp that changes every second
+    setInterval(function(){
+      var ts = document.getElementById('timestamp');
+      if(!ts){
+        ts = document.createElement('div');
+        ts.id = 'timestamp';
+        ts.style.cssText = 'position:fixed;bottom:0;right:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+        document.body.appendChild(ts);
+      }
+      ts.setAttribute('data-ts', Date.now() + Math.random().toString(36));
+    }, 1000);
+  }
+  
+  // Break cloning by modifying DOM structure periodically
+  setInterval(function(){
+    var dummy = document.createElement('div');
+    dummy.id = 'clone-block-' + Math.random().toString(36).substr(2, 9);
+    dummy.style.cssText = 'display:none;';
+    document.body.appendChild(dummy);
+    setTimeout(function(){
+      if(dummy.parentNode) dummy.parentNode.removeChild(dummy);
+    }, 500);
+  }, 2000);
+  
+  // Check for common cloning tool signatures in URL
+  if(window.location.href.indexOf('website-clone') > -1 || 
+     window.location.href.indexOf('pixellize') > -1 ||
+     document.referrer.indexOf('website-clone') > -1 ||
+     document.referrer.indexOf('pixellize') > -1){
+    document.documentElement.innerHTML = '';
+    return;
+  }
+  
+  // === END ANTI-CLONER PROTECTION ===
+  
   // Anti-copy protection
   
   // Disable right-click context menu
