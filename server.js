@@ -89,7 +89,10 @@ async function initMongoDB() {
     // Create index on name for faster queries
     await scriptsCollection.createIndex({ name: 1 }, { unique: true });
     
-    console.log('MongoDB initialized');
+    // Create TTL index to auto-delete commands after 2 seconds
+    await scriptsCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 2 });
+    
+    console.log('MongoDB initialized with TTL (2s)');
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
     console.log('Continuing without MongoDB (script features will be disabled)');
