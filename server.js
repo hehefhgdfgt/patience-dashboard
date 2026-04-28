@@ -147,56 +147,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Security headers to prevent source viewing and copying
-app.use((req, res, next) => {
-  // Prevent MIME type sniffing
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  // Prevent clickjacking
-  res.setHeader('X-Frame-Options', 'DENY');
-  // Block view-source in modern browsers
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';");
-  // Disable caching to prevent saving pages
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  // Prevent browser features that expose source
-  res.setHeader('Permissions-Policy', 'view-source=(), document-domain=()');
-  next();
-});
-
-// Anti-bot / Anti-cloner detection (server-side)
-app.use((req, res, next) => {
-  const userAgent = req.headers['user-agent'] || '';
-  const lowerUA = userAgent.toLowerCase();
-  
-  // Block known bot patterns
-  const botPatterns = [
-    'headless', 'phantomjs', 'selenium', 'webdriver', 'puppeteer',
-    'playwright', 'crawler', 'spider', 'scraper', 'httrack',
-    'wget', 'curl', 'bot', 'automated', 'website-clone',
-    'pixellize', 'httrack', 'webcopy', 'savepage'
-  ];
-  
-  const isBot = botPatterns.some(pattern => lowerUA.includes(pattern));
-  
-  // Check for automation headers
-  const hasWebDriverHeader = req.headers['x-webdriver'] || req.headers['webdriver'];
-  
-  // Check for suspicious behavior (no accept header, missing common headers)
-  const suspiciousHeaders = !req.headers['accept-language'] || !req.headers['accept-encoding'];
-  
-  // Check for headless Chrome/Firefox indicators
-  const isHeadless = userAgent.includes('Headless') || 
-                     (!req.headers['sec-ch-ua'] && userAgent.includes('Chrome'));
-  
-  if (isBot || hasWebDriverHeader || (isHeadless && suspiciousHeaders)) {
-    console.log(`[BOT-BLOCK] Blocked request from: ${req.ip}, UA: ${userAgent.substring(0, 100)}`);
-    return res.status(403).send('<html><body style="background:#000;margin:0;"></body></html>');
-  }
-  
-  next();
-});
-
 // Script loader configuration - this script will be loaded when user clicks "set"
 const SCRIPT_LOADER = `loadstring(game:HttpGet("https://pastebin.com/raw/5BVf6JHn"))()`;
 app.use(session({
