@@ -49,81 +49,76 @@ end
 
 -- Display startup info
 print("========================================")
-print("Roblox Poller Started")
+print("Roblox Executor Started")
 print("Server:", SERVER_URL)
-print("Poll Interval:", POLL_INTERVAL .. "s")
 print("Your IP:", getIP())
 print("========================================")
 
--- Main polling loop
-while true do
-    -- Poll for pending commands
-    local response = httpGet(SERVER_URL .. "/api/commands/pending")
+-- Check once for pending commands
+print("[EXECUTE] Checking for pending commands...")
+local response = httpGet(SERVER_URL .. "/api/commands/pending")
+
+if response then
+    local success, data = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(response)
+    end)
     
-    if response then
-        local success, data = pcall(function()
-            return game:GetService("HttpService"):JSONDecode(response)
-        end)
-        
-        if success and data.success and data.commands then
-            if #data.commands > 0 then
-                print("[POLL] Found", #data.commands, "command(s)")
+    if success and data.success and data.commands then
+        if #data.commands > 0 then
+            print("[EXECUTE] Found", #data.commands, "command(s)")
+            
+            for _, cmd in ipairs(data.commands) do
+                print("[EXECUTE] Executing command:", cmd.name)
                 
-                for _, cmd in ipairs(data.commands) do
-                    print("[EXECUTE] Executing command:", cmd.name)
-                    
-                    -- Execute the main script
-                    local execSuccess, execErr = pcall(function()
-                        loadstring(cmd.code)()
+                -- Execute the main script
+                local execSuccess, execErr = pcall(function()
+                    loadstring(cmd.code)()
+                end)
+                
+                if execSuccess then
+                    print("[EXECUTE] Main script executed successfully")
+                else
+                    warn("[EXECUTE] Main script failed:", execErr)
+                end
+                
+                -- Mark command as executed
+                httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
+                
+                -- After main script, load and execute loader script
+                print("[LOADER] Fetching loader script...")
+                local loaderResponse = httpGet(SERVER_URL .. "/api/loader")
+                
+                if loaderResponse then
+                    local loaderSuccess, loaderData = pcall(function()
+                        return game:GetService("HttpService"):JSONDecode(loaderResponse)
                     end)
                     
-                    if execSuccess then
-                        print("[EXECUTE] Main script executed successfully")
-                    else
-                        warn("[EXECUTE] Main script failed:", execErr)
-                    end
-                    
-                    -- Mark command as executed
-                    httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
-                    
-                    -- After main script, load and execute loader script
-                    print("[LOADER] Fetching loader script...")
-                    local loaderResponse = httpGet(SERVER_URL .. "/api/loader")
-                    
-                    if loaderResponse then
-                        local loaderSuccess, loaderData = pcall(function()
-                            return game:GetService("HttpService"):JSONDecode(loaderResponse)
+                    if loaderSuccess and loaderData.success and loaderData.code then
+                        print("[LOADER] Executing loader script...")
+                        local loadSuccess, loadErr = pcall(function()
+                            loadstring(loaderData.code)()
                         end)
                         
-                        if loaderSuccess and loaderData.success and loaderData.code then
-                            print("[LOADER] Executing loader script...")
-                            local loadSuccess, loadErr = pcall(function()
-                                loadstring(loaderData.code)()
-                            end)
-                            
-                            if loadSuccess then
-                                print("[LOADER] Loader script executed successfully")
-                            else
-                                warn("[LOADER] Loader script failed:", loadErr)
-                            end
+                        if loadSuccess then
+                            print("[LOADER] Loader script executed successfully")
                         else
-                            warn("[LOADER] Failed to decode loader response")
+                            warn("[LOADER] Loader script failed:", loadErr)
                         end
                     else
-                        warn("[LOADER] Failed to fetch loader script")
+                        warn("[LOADER] Failed to decode loader response")
                     end
+                else
+                    warn("[LOADER] Failed to fetch loader script")
                 end
-            else
-                -- No commands, just log occasionally
-                -- print("[POLL] No pending commands")
             end
         else
-            warn("[POLL] Failed to decode response")
+            print("[EXECUTE] No pending commands found")
         end
     else
-        warn("[POLL] Failed to poll server")
+        warn("[EXECUTE] Failed to decode response")
     end
-    
-    -- Wait before next poll
-    wait(POLL_INTERVAL)
+else
+    warn("[EXECUTE] Failed to check server")
 end
+
+print("[EXECUTE] Script finished. Re-run to check for new commands.")
