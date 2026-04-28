@@ -3,10 +3,6 @@
 -- After main script execution, loads the loader script
 
 local SERVER_URL = "https://coachtopia.fun"
-local POLL_INTERVAL = 3
-
--- Track already executed commands to prevent re-execution
-local alreadyExecuted = {}
 
 -- HTTP request function
 local function httpGet(url)
@@ -71,16 +67,7 @@ if response then
             print("[EXECUTE] Found", #data.commands, "command(s)")
             
             for _, cmd in ipairs(data.commands) do
-                -- Skip if already executed
-                if alreadyExecuted[cmd.name] then
-                    print("[EXECUTE] Skipping already executed command:", cmd.name)
-                    continue
-                end
-                
                 print("[EXECUTE] Executing command:", cmd.name)
-                
-                -- Mark as executed before running
-                alreadyExecuted[cmd.name] = true
                 
                 -- Execute the main script
                 local execSuccess, execErr = pcall(function()
@@ -93,7 +80,7 @@ if response then
                     warn("[EXECUTE] Main script failed:", execErr)
                 end
                 
-                -- Mark command as executed on server
+                -- Mark command as executed on server (deletes it)
                 httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
                 
                 -- After main script, load and execute loader script
