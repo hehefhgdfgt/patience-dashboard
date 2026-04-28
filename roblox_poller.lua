@@ -17,15 +17,34 @@ local function httpGet(url)
     end
 end
 
--- HttpPost function
+-- HttpPost function (different executors have different syntax)
 local function httpPost(url, data)
     local success, result = pcall(function()
-        return game:HttpPost(url, data or "", false, "application/json")
+        -- Try different methods based on executor
+        if syn and syn.request then
+            syn.request({
+                Url = url,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = data or ""
+            })
+        elseif http and http.request then
+            http.request({
+                Url = url,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = data or ""
+            })
+        else
+            -- Fallback - some executors don't need to confirm deletion
+            -- Server deletes commands automatically after sending
+            return "ok"
+        end
     end)
     if success then
         return result
     else
-        warn("[HTTP] POST failed:", result)
+        warn("[HTTP] POST failed (non-critical):", result)
         return nil
     end
 end
@@ -46,8 +65,8 @@ while true do
             end)
             
             if decodeSuccess and data.success and data.commands and #data.commands > 0 then
-                for _, cmd in ipairs(data.commands) do
-                    print("[EXECUTE] Received command:", cmd.name)
+                for i, cmd in ipairs(data.commands) do
+                    print("[EXECUTE] Received command:", cmd.name, "(order:", i, ")")
                     
                     if cmd.code then
                         print("[EXECUTE] Executing script...")
@@ -61,8 +80,14 @@ while true do
                             warn("[EXECUTE] Script failed:", execErr)
                         end
                         
-                        -- Mark command as executed (server deletes it automatically, but we call this for completeness)
+                        -- Mark command as executed
                         httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
+                        
+                        -- Wait a moment between config and loader to ensure shared.coach is set
+                        if i < #data.commands then
+                            print("[EXECUTE] Waiting before next command...")
+                            wait(0.5)
+                        end
                     end
                 end
             end

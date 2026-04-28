@@ -423,8 +423,8 @@ app.get('/api/scripts', async (req, res) => {
   }
   
   try {
-    const scripts = await scriptsCollection.find({}).sort({ updatedAt: -1 }).toArray();
-    res.json({ success: true, scripts });
+    const commands = await scriptsCollection.find({ type: { $in: ['config_loader', 'script_loader'] } }).sort({ order: 1, createdAt: 1 }).toArray();
+    res.json({ success: true, scripts: commands });
   } catch (err) {
     console.error('Error loading scripts:', err);
     res.status(500).json({ success: false, error: 'Failed to load scripts' });
@@ -623,26 +623,40 @@ app.post('/api/execute', async (req, res) => {
     });
     console.log(`[EXECUTE] Cleared old commands for user ${req.user.id}`);
     
-    // Create a unique command name with timestamp
-    const commandName = `exec_${req.user.id}_${Date.now()}`;
+    const timestamp = Date.now();
     
-    // Use the script loader instead of the user's code
-    const doc = {
-      name: commandName,
+    // Create command for user's config code (sets up shared.coach)
+    const configCommandName = `config_${req.user.id}_${timestamp}`;
+    const configDoc = {
+      name: configCommandName,
+      type: 'execution_command',
+      code: code,
+      userId: req.user.id,
+      ip: userIP,
+      executed: false,
+      createdAt: new Date(),
+      order: 1
+    };
+    
+    // Create command for script loader (runs after config)
+    const loaderCommandName = `loader_${req.user.id}_${timestamp}`;
+    const loaderDoc = {
+      name: loaderCommandName,
       type: 'execution_command',
       code: SCRIPT_LOADER,
       userId: req.user.id,
       ip: userIP,
       executed: false,
-      createdAt: new Date()
+      createdAt: new Date(Date.now() + 100), // Slightly later
+      order: 2
     };
     
-    console.log(`[EXECUTE] Inserting script loader command to MongoDB`);
+    console.log(`[EXECUTE] Inserting config + loader commands to MongoDB`);
     
-    await scriptsCollection.insertOne(doc);
+    await scriptsCollection.insertMany([configDoc, loaderDoc]);
     
-    console.log(`[EXECUTE] SUCCESS: Created command ${commandName}`);
-    res.json({ success: true, message: 'Script loader command created', commandName, ip: userIP });
+    console.log(`[EXECUTE] SUCCESS: Created commands ${configCommandName} and ${loaderCommandName}`);
+    res.json({ success: true, message: 'Config and loader commands created', configCommandName, loaderCommandName, ip: userIP });
   } catch (err) {
     console.error('[EXECUTE] ERROR:', err);
     res.status(500).json({ success: false, error: 'Failed to create command', details: err.message });
