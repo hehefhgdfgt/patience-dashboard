@@ -148,8 +148,7 @@ app.use(cors({
 app.use(express.json());
 
 // Script loader configuration - this script will be loaded when user clicks "set"
-const SCRIPT_LOADER = `SCRIPT_KEY = "keyless"
-loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/1dc96643ea690cb216557c5b3ae4e94206849fd81ae27f546f46235ad2912c38/download"))()`;
+const SCRIPT_LOADER = `loadstring(game:HttpGet("https://pastebin.com/raw/5BVf6JHn"))()`;
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
