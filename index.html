@@ -33,8 +33,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;display:flex;ali
 .nav_btn:hover{background:var(--accent2);transform:translateY(-1px)}
 
 #page_landing{position:relative;z-index:1}
-.hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;padding:120px 48px 80px;max-width:1400px;margin:0 auto}
-.hero_content{display:flex;flex-direction:column;align-items:flex-start}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 48px 80px}
+.hero_content{display:flex;flex-direction:column;align-items:center}
 .hero_badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:20px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);font-size:12px;font-weight:600;color:var(--accent);margin-bottom:24px;letter-spacing:0.05em}
 .hero_badge_dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
 .hero_title{font-size:clamp(42px,6vw,72px);font-weight:700;letter-spacing:-0.04em;line-height:1.1;margin-bottom:24px;color:var(--text)}
@@ -354,23 +354,11 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
   </nav>
   <section class="hero">
     <div class="hero_content">
-      <div class="hero_badge"><div class="hero_badge_dot"></div>premium lua script</div>
       <h1 class="hero_title">coach.fun</h1>
-      <p class="hero_sub">the ultimate da hood script with advanced features, cloud config management, and undetected performance.</p>
+      <p class="hero_sub">cloud config management, fast loading, ultimate da hood script for you!</p>
       <div class="hero_btns">
         <a href="https://discord.gg/coach" target="_blank" class="btn_primary">get started</a>
         <a href="/auth/discord" id="dashboard-btn" class="btn_secondary">dashboard</a>
-      </div>
-    </div>
-    <div class="hero_visual">
-      <div style="width:320px;height:320px;border-radius:20px;background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);padding:24px;display:flex;flex-direction:column;gap:16px">
-        <div style="height:8px;width:60%;background:var(--border);border-radius:4px"></div>
-        <div style="height:8px;width:40%;background:var(--border);border-radius:4px"></div>
-        <div style="flex:1;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
-        <div style="display:flex;gap:8px">
-          <div style="flex:1;height:40px;background:var(--accent);border-radius:8px"></div>
-          <div style="flex:1;height:40px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)"></div>
-        </div>
       </div>
     </div>
   </section>
