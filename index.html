@@ -24,6 +24,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(10,10,10,0.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .nav_logo{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-decoration:none;display:flex;align-items:center;gap:12px}
 .nav_logo_dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.nav_logo_text{position:relative;overflow:hidden;white-space:nowrap}
+.nav_logo_scroller{display:inline-block;animation:scroll 15s linear infinite}
+@keyframes scroll{0%,100%{transform:translateX(0)}50%{transform:translateX(-100%)}}
 .nav_links{display:flex;align-items:center;gap:8px}
 .nav_link{padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted2);text-decoration:none;transition:all 0.2s}
 .nav_link:hover{color:var(--text);background:var(--bg2)}
@@ -343,7 +346,7 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
 <div id="page_landing">
   <nav>
-    <a href="/index.html" class="nav_logo"><div class="nav_logo_dot"></div>coach.fun</a>
+    <a href="/index.html" class="nav_logo"><div class="nav_logo_dot"></div><div class="nav_logo_text"><div class="nav_logo_scroller">coach.fun • premium lua script • undetected • cloud configs • instant execution • coach.fun • premium lua script • undetected • cloud configs • instant execution</div></div></a>
     <div class="nav_links">
       <a href="https://discord.gg/coach" target="_blank" class="nav_link">discord</a>
       <a href="https://discord.gg/coach" target="_blank" class="nav_link">purchase</a>
@@ -369,38 +372,6 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
           <div style="flex:1;height:40px;background:var(--accent);border-radius:8px"></div>
           <div style="flex:1;height:40px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)"></div>
         </div>
-      </div>
-    </div>
-  </section>
-  <div class="section_divider"></div>
-  <section class="features">
-    <div class="section_label">features</div>
-    <h2 class="section_title">everything you need</h2>
-    <p class="section_sub">a complete closet / rage cheat built for the best experience.</p>
-    <div class="features_grid">
-      <div class="feature_card">
-        <div class="feature_icon"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></div>
-        <div class="feature_title">closet features</div><div class="feature_desc">every feature you need for closet cheating, all in one script.</div>
-      </div>
-      <div class="feature_card">
-        <div class="feature_icon"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div>
-        <div class="feature_title">rage features</div><div class="feature_desc">overpowered rage features to dominate when needed.</div>
-      </div>
-      <div class="feature_card">
-        <div class="feature_icon"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg></div>
-        <div class="feature_title">config marketplace</div><div class="feature_desc">discover, share, and import configs from the community marketplace.</div>
-      </div>
-      <div class="feature_card">
-        <div class="feature_icon"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg></div>
-        <div class="feature_title">undetection</div><div class="feature_desc">regularly updated to stay undetected across every game patch.</div>
-      </div>
-      <div class="feature_card">
-        <div class="feature_icon"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg></div>
-        <div class="feature_title">cloud management</div><div class="feature_desc">manage multiple named configs in the cloud &mdash; set any as your active config.</div>
-      </div>
-      <div class="feature_card">
-        <div class="feature_icon"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
-        <div class="feature_title">instant execution</div><div class="feature_desc">your loader always fetches the latest saved config. no re-execution needed.</div>
       </div>
     </div>
   </section>
