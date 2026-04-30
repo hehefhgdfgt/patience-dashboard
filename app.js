@@ -201,6 +201,7 @@ async function api_post(path, body, method = "POST") {
 async function api_get(path) { return (await fetch(API_BASE+path)).json(); }
 
 async function check_auth() {
+  console.log('Checking auth...');
   const params = new URLSearchParams(window.location.search);
   const err    = params.get("auth_error");
   if (err) {
@@ -210,15 +211,21 @@ async function check_auth() {
   }
   try { 
     const data = await api_get("/auth/me"); 
+    console.log('Auth response:', data);
     if (data.success) { 
       current_user = data; 
+      console.log('Entering dashboard...');
       await enter_dashboard(); 
+    } else {
+      console.log('Not authenticated');
     }
   } catch(e) {
+    console.error('Auth check error:', e);
   }
 }
 
 async function enter_dashboard() {
+  console.log('Entering dashboard, user:', current_user);
   const { discord_id, username, global_name, avatar, is_admin } = current_user;
   const display = global_name || username;
   document.getElementById("dash_display_name").textContent = display;
@@ -242,15 +249,20 @@ async function enter_dashboard() {
     if (navAdmin) navAdmin.style.display = "";
   }
 
+  console.log('Calling show_dashboard...');
   show_dashboard();
+  console.log('Dashboard shown');
   
   // Load user tabs from server
   try {
     const data = await api_get("/tabs");
+    console.log('Tabs API response:', data);
     if (data.success && data.tabs && data.tabs.length > 0) {
       tabs = data.tabs;
       active_tab = tabs[0].name;
+      console.log('Loaded tabs:', tabs.length, 'Active tab:', active_tab);
       render_tabs(active_tab);
+      console.log('Tabs rendered, setting editor value');
       if (!editor_ready) init_monaco(tabs[0].code);
       else { editor.setValue(tabs[0].code); set_dirty(false); }
     } else {
@@ -453,6 +465,7 @@ async function enter_dashboard() {
       else { editor.setValue(tabs[0].code); set_dirty(false); }
     }
   } catch(e) {
+    console.error('Error loading tabs:', e);
     // Fallback to default config
     const defaultConfig = `shared.coach = {
     ['Combat'] = {
@@ -656,9 +669,11 @@ async function enter_dashboard() {
 function make_av_fallback(n) { const el=document.createElement("div"); el.className="dash_avatar_fallback"; el.textContent=(n||"?").charAt(0).toUpperCase(); return el; }
 
 function render_tabs(activate) {
+  console.log('render_tabs called with activate:', activate, 'active_tab:', active_tab);
   render_file_tree();
   update_export_dropdown_menu();
   if (activate) active_tab = activate;
+  console.log('render_tabs complete, active_tab is now:', active_tab);
 }
 
 function render_file_tree() {
@@ -678,18 +693,17 @@ function render_file_tree() {
   });
 }
 function switch_tab(name) {
+  console.log('switch_tab called with:', name, 'current active_tab:', active_tab);
   if (name===active_tab) return;
   const cur = tabs.find(t=>t.name===active_tab);
   if (cur&&editor_ready) cur.code=editor.getValue();
   active_tab=name; const t=tabs.find(t=>t.name===name);
+  console.log('Setting active_tab to:', name, 'tab found:', !!t);
   if (t&&editor_ready) { editor.setValue(t.code); set_dirty(false); }
   render_tabs(name);
   const nameEl = document.getElementById("current_config_name");
   if (nameEl) nameEl.textContent = name;
-  // Refresh visual settings if in visual mode
-  if (currentViewMode === 'visual') {
-    parse_and_render_config();
-  }
+  console.log('switch_tab complete, active_tab is now:', active_tab);
 }
 async function add_tab() {
   const name = prompt("Enter config name:", "config");
@@ -698,6 +712,7 @@ async function add_tab() {
     show_toast("Config name already exists", "error");
     return;
   }
+  console.log('Creating new tab:', name);
   const defaultConfig = `shared.coach = {
     ['Combat'] = {
         ['Silent Aim'] = {
@@ -889,12 +904,17 @@ async function add_tab() {
         },
     },
 }`;
+  console.log('Default config length:', defaultConfig.length);
+  console.log('Default config preview:', defaultConfig.substring(0, 200));
   tabs.push({name,code:defaultConfig});
+  console.log('Tab added to local tabs array');
   await api_post("/tabs/save",{name,code:defaultConfig});
+  console.log('Tab saved to server');
   render_file_tree();
   render_tabs(name); if(editor_ready){editor.setValue(defaultConfig);set_dirty(false);} active_tab=name;
   const nameEl = document.getElementById("current_config_name");
   if (nameEl) nameEl.textContent = name;
+  console.log('Tab rendered and activated');
 }
 async function delete_tab(name) {
   if(tabs.length<=1){show_toast("cannot delete last tab","error");return;}
@@ -909,7 +929,8 @@ async function do_save(silent=false) {
   if(!editor_ready||!active_tab) return;
   const code=editor.getValue(), t=tabs.find(t=>t.name===active_tab);
   if(t) t.code=code;
-  try { const data=await api_post("/tabs/save",{name:active_tab,code}); if(data.success){set_dirty(false);} else if(!silent)show_toast(data.message||"save failed","error"); }
+  console.log('Saving config:', active_tab, 'Code length:', code.length);
+  try { const data=await api_post("/tabs/save",{name:active_tab,code}); if(data.success){set_dirty(false); console.log('Save successful');} else if(!silent)show_toast(data.message||"save failed","error"); }
   catch{ if(!silent)show_toast("could not reach server","error"); }
 }
 async function do_set() {
@@ -918,16 +939,22 @@ async function do_set() {
   
   // Execute the code to Roblox
   const code = editor.getValue();
+  console.log('[EXECUTE] Calling /api/execute with code length:', code.length);
+  console.log('[EXECUTE] Full request URL:', API_BASE + '/execute');
   
   try {
     const execData = await api_post("/execute", { code });
+    console.log('[EXECUTE] Response:', execData);
     
     if(execData.success){
       show_toast(`${active_tab} executed to Roblox`, "success");
+      console.log('[EXECUTE] Success! IP:', execData.ip);
     } else {
       show_toast(execData.error || "execution failed", "error");
+      console.error('[EXECUTE] Failed:', execData.error, execData.details);
     }
   } catch(err) {
+    console.error('[EXECUTE] Exception:', err);
     show_toast("execution failed: " + err.message, "error");
   }
 
@@ -1375,6 +1402,7 @@ async function load_whitelist() {
     whitelistData = data.whitelist.users;
     render_whitelist(whitelistData);
   } catch (err) {
+    console.error("Failed to load whitelist:", err);
   }
 }
 
@@ -1584,432 +1612,6 @@ const publishDesc = document.getElementById("publish_desc"); if(publishDesc)publ
 window.addEventListener("keydown",e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==="s"&&editor_ready){e.preventDefault();do_save();}
   if(e.key==="Escape"){close_publish_modal();close_rename_modal();close_view_modal();close_keygen_modal();}
-});
-
-/* Visual Settings Panel */
-let currentViewMode = 'visual'; // 'visual' or 'code'
-let parsedConfig = {};
-
-function toggle_editor_view() {
-  const editorContainer = document.querySelector('.exec_editor');
-  const visualPanel = document.getElementById('visual_settings_panel');
-  const btn = document.querySelector('.vs_toggle_view');
-
-  if (currentViewMode === 'visual') {
-    // Switch to code view
-    currentViewMode = 'code';
-    editorContainer.style.display = 'flex';
-    visualPanel.style.display = 'none';
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 12l2 2 4-4"></path></svg> visual view`;
-  } else {
-    // Switch to visual view
-    currentViewMode = 'visual';
-    editorContainer.style.display = 'none';
-    visualPanel.style.display = 'block';
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg> code view`;
-    parse_and_render_config();
-  }
-}
-
-function parse_lua_config(code) {
-  // Simple parser for the config structure
-  const config = {};
-  const lines = code.split('\n');
-  let currentCategory = null;
-  let currentSection = null;
-  let currentSubSection = null;
-  let depth = 0;
-
-  for (let line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('--')) continue;
-
-    // Count leading tabs/spaces for depth
-    const leading = line.match(/^[\t]*/)[0];
-    depth = leading.length;
-
-    // Category: ['Name'] = {
-    const catMatch = trimmed.match(/^\['([^']+)'\]\s*=\s*\{/);
-    if (catMatch && depth === 1) {
-      currentCategory = catMatch[1];
-      config[currentCategory] = {};
-      currentSection = null;
-      currentSubSection = null;
-      continue;
-    }
-
-    // Section: ['Name'] = {
-    const secMatch = trimmed.match(/^\['([^']+)'\]\s*=\s*\{/);
-    if (secMatch && depth === 2 && currentCategory) {
-      currentSection = secMatch[1];
-      config[currentCategory][currentSection] = {};
-      currentSubSection = null;
-      continue;
-    }
-
-    // SubSection: ['Name'] = {
-    const subMatch = trimmed.match(/^\['([^']+)'\]\s*=\s*\{/);
-    if (subMatch && depth === 3 && currentSection) {
-      currentSubSection = subMatch[1];
-      config[currentCategory][currentSection][currentSubSection] = {};
-      continue;
-    }
-
-    // Key-value pairs at different depths
-    const kvMatch = trimmed.match(/^\['([^']+)'\]\s*=\s*(.+?)(?:,|$)/);
-    if (kvMatch) {
-      const key = kvMatch[1];
-      let value = kvMatch[2].trim();
-
-      // Parse value
-      if (value === 'true') value = true;
-      else if (value === 'false') value = false;
-      else if (!isNaN(value) && value !== '') value = Number(value);
-      else if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
-      else if (value.startsWith('Color3.fromRGB')) {
-        const rgb = value.match(/\d+/g);
-        if (rgb) value = { r: parseInt(rgb[0]), g: parseInt(rgb[1]), b: parseInt(rgb[2]) };
-      }
-
-      if (currentSubSection && typeof config[currentCategory][currentSection][currentSubSection] === 'object') {
-        config[currentCategory][currentSection][currentSubSection][key] = value;
-      } else if (currentSection && typeof config[currentCategory][currentSection] === 'object') {
-        config[currentCategory][currentSection][key] = value;
-      } else if (currentCategory) {
-        config[currentCategory][key] = value;
-      }
-    }
-
-    // Array items
-    const arrMatch = trimmed.match(/^'([^']+)'/);
-    if (arrMatch && depth >= 4) {
-      const item = arrMatch[1];
-      if (currentSubSection) {
-        if (!config[currentCategory][currentSection][currentSubSection].items) {
-          config[currentCategory][currentSection][currentSubSection].items = [];
-        }
-        config[currentCategory][currentSection][currentSubSection].items.push(item);
-      }
-    }
-  }
-
-  return config;
-}
-
-function parse_and_render_config() {
-  if (!editor_ready || !active_tab) return;
-
-  const code = editor.getValue();
-  parsedConfig = parse_lua_config(code);
-  render_visual_settings(parsedConfig);
-}
-
-function render_visual_settings(config) {
-  const container = document.getElementById('vs_categories');
-  container.innerHTML = '';
-
-  const categoryOrder = ['Combat', 'Skin Changer', 'Character', 'Movement', 'Visuals'];
-  const categoryIcons = {
-    'Combat': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M9 15l3-3 3 3"></path></svg>`,
-    'Skin Changer': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`,
-    'Character': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
-    'Movement': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
-    'Visuals': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`
-  };
-
-  categoryOrder.forEach(catName => {
-    if (!config[catName]) return;
-
-    const catDiv = document.createElement('div');
-    catDiv.className = 'vs_category';
-
-    const header = document.createElement('div');
-    header.className = 'vs_cat_header';
-    header.innerHTML = `${categoryIcons[catName] || ''}<span class="vs_cat_title">${catName}</span>`;
-    header.onclick = () => toggle_category(catDiv);
-
-    const content = document.createElement('div');
-    content.className = 'vs_cat_content';
-    content.id = `vs_cat_${catName}`;
-
-    // Render sections
-    Object.entries(config[catName]).forEach(([secName, secData]) => {
-      if (typeof secData === 'object' && secData !== null) {
-        content.appendChild(render_section(catName, secName, secData));
-      } else {
-        // Simple key-value at category level
-        const row = create_row(catName, secName, secData, null);
-        content.appendChild(row);
-      }
-    });
-
-    catDiv.appendChild(header);
-    catDiv.appendChild(content);
-    container.appendChild(catDiv);
-  });
-}
-
-function render_section(category, name, data) {
-  const section = document.createElement('div');
-  section.className = 'vs_section';
-
-  const hasEnabled = data.hasOwnProperty('Enabled');
-
-  const header = document.createElement('div');
-  header.className = 'vs_section_header';
-  header.innerHTML = `<span class="vs_section_title">${name}</span>`;
-
-  if (hasEnabled) {
-    const toggle = create_toggle(category, name, 'Enabled', data['Enabled']);
-    header.appendChild(toggle);
-  }
-
-  section.appendChild(header);
-
-  const content = document.createElement('div');
-  content.className = 'vs_section_content';
-
-  Object.entries(data).forEach(([key, value]) => {
-    if (key === 'Enabled') return;
-
-    if (typeof value === 'object' && value !== null && !Array.isArray(value) && !(value.r !== undefined)) {
-      // Nested object - render as subsection
-      const subSection = render_subsection(category, name, key, value);
-      content.appendChild(subSection);
-    } else {
-      const row = create_row(category, key, value, name);
-      content.appendChild(row);
-    }
-  });
-
-  section.appendChild(content);
-  return section;
-}
-
-function render_subsection(category, section, name, data) {
-  const sub = document.createElement('div');
-  sub.className = 'vs_nested';
-
-  const subSection = document.createElement('div');
-  subSection.className = 'vs_section';
-
-  const header = document.createElement('div');
-  header.className = 'vs_section_header';
-  header.innerHTML = `<span class="vs_section_title" style="font-size:12px;color:var(--muted)">${name}</span>`;
-
-  if (data.hasOwnProperty('Enabled')) {
-    const toggle = create_toggle(category, section, 'Enabled', data['Enabled'], name);
-    header.appendChild(toggle);
-  }
-
-  subSection.appendChild(header);
-
-  const content = document.createElement('div');
-  content.className = 'vs_section_content';
-
-  Object.entries(data).forEach(([key, value]) => {
-    if (key === 'Enabled') return;
-
-    if (key === 'Items' || (Array.isArray(value) && typeof value[0] === 'string')) {
-      // Array of items
-      const itemsDiv = document.createElement('div');
-      itemsDiv.className = 'vs_items';
-      const items = Array.isArray(value) ? value : (value.items || []);
-      items.forEach(item => {
-        const span = document.createElement('span');
-        span.className = 'vs_item';
-        span.textContent = item;
-        itemsDiv.appendChild(span);
-      });
-      content.appendChild(itemsDiv);
-    } else if (typeof value === 'object' && value !== null) {
-      // Deeper nesting
-      const row = create_row(category, key, value, section, name);
-      content.appendChild(row);
-    } else {
-      const row = create_row(category, key, value, section, name);
-      content.appendChild(row);
-    }
-  });
-
-  subSection.appendChild(content);
-  sub.appendChild(subSection);
-  return sub;
-}
-
-function create_row(category, key, value, section = null, subsection = null) {
-  const row = document.createElement('div');
-  row.className = 'vs_row';
-
-  const label = document.createElement('div');
-  label.className = 'vs_label';
-  label.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="1"></circle></svg>${key}`;
-  row.appendChild(label);
-
-  const control = create_control(category, key, value, section, subsection);
-  row.appendChild(control);
-
-  return row;
-}
-
-function create_control(category, key, value, section, subsection) {
-  if (typeof value === 'boolean') {
-    return create_toggle(category, section, key, value, subsection);
-  } else if (typeof value === 'number') {
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.className = 'vs_input vs_input_small';
-    input.value = value;
-    input.step = key.toLowerCase().includes('smooth') ? 0.01 : 1;
-    input.onchange = () => update_config_value(category, section, key, parseFloat(input.value), subsection);
-    return input;
-  } else if (typeof value === 'string') {
-    if (key === 'Key' || key === 'Bind') {
-      // Keybind
-      const keybind = document.createElement('div');
-      keybind.className = 'vs_keybind';
-      keybind.textContent = value;
-      keybind.onclick = () => record_keybind(keybind, category, section, key, subsection);
-      return keybind;
-    } else if (['Bone', 'Mode', 'Type', 'Position'].includes(key)) {
-      // Select dropdown
-      const select = document.createElement('select');
-      select.className = 'vs_select';
-      const options = {
-        'Bone': ['Head', 'HumanoidRootPart', 'Torso'],
-        'Mode': ['Target', 'Full', 'Display'],
-        'Type': ['Toggle', 'Hold', 'Always'],
-        'Position': ['Top', 'Bottom', 'Left', 'Right']
-      };
-      (options[key] || []).forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt;
-        option.textContent = opt;
-        if (opt === value) option.selected = true;
-        select.appendChild(option);
-      });
-      select.onchange = () => update_config_value(category, section, key, select.value, subsection);
-      return select;
-    } else {
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.className = 'vs_input';
-      input.value = value;
-      input.onchange = () => update_config_value(category, section, key, input.value, subsection);
-      return input;
-    }
-  } else if (value && value.r !== undefined) {
-    // Color3
-    const color = document.createElement('input');
-    color.type = 'color';
-    color.className = 'vs_input_color';
-    color.value = `#${value.r.toString(16).padStart(2,'0')}${value.g.toString(16).padStart(2,'0')}${value.b.toString(16).padStart(2,'0')}`;
-    color.onchange = () => {
-      const hex = color.value.slice(1);
-      const r = parseInt(hex.slice(0,2), 16);
-      const g = parseInt(hex.slice(2,4), 16);
-      const b = parseInt(hex.slice(4,6), 16);
-      update_config_value(category, section, key, {r,g,b}, subsection);
-    };
-    return color;
-  }
-
-  const span = document.createElement('span');
-  span.className = 'vs_value';
-  span.textContent = JSON.stringify(value);
-  return span;
-}
-
-function create_toggle(category, section, key, value, subsection = null) {
-  const toggle = document.createElement('div');
-  toggle.className = `vs_toggle ${value ? 'active' : ''}`;
-  toggle.onclick = () => {
-    const newValue = !toggle.classList.contains('active');
-    toggle.classList.toggle('active');
-    update_config_value(category, section, key, newValue, subsection);
-  };
-  return toggle;
-}
-
-let recordingKeybind = null;
-
-function record_keybind(element, category, section, key, subsection) {
-  if (recordingKeybind) {
-    recordingKeybind.classList.remove('recording');
-  }
-  recordingKeybind = element;
-  element.classList.add('recording');
-  element.textContent = 'press key...';
-
-  const handler = (e) => {
-    e.preventDefault();
-    const newKey = e.key.length === 1 ? e.key.toUpperCase() : e.key;
-    element.textContent = newKey;
-    element.classList.remove('recording');
-    update_config_value(category, section, key, newKey, subsection);
-    document.removeEventListener('keydown', handler);
-    recordingKeybind = null;
-  };
-
-  document.addEventListener('keydown', handler, { once: true });
-}
-
-function toggle_category(catDiv) {
-  const header = catDiv.querySelector('.vs_cat_header');
-  const content = catDiv.querySelector('.vs_cat_content');
-  header.classList.toggle('collapsed');
-  content.classList.toggle('collapsed');
-}
-
-function update_config_value(category, section, key, value, subsection = null) {
-  if (!editor_ready) return;
-
-  let code = editor.getValue();
-  let path = [category];
-  if (section) path.push(section);
-  if (subsection) path.push(subsection);
-  path.push(key);
-
-  // Build regex pattern to find the value
-  let pattern = '';
-  for (let i = 0; i < path.length; i++) {
-    if (i > 0) pattern += '[\\s\\S]*?';
-    pattern += `\\['${path[i]}'\\]\\s*=\\s*`;
-  }
-
-  let replacement;
-  if (typeof value === 'boolean') {
-    replacement = value.toString();
-  } else if (typeof value === 'number') {
-    replacement = value.toString();
-  } else if (typeof value === 'string') {
-    replacement = `'${value}'`;
-  } else if (value && value.r !== undefined) {
-    replacement = `Color3.fromRGB(${value.r}, ${value.g}, ${value.b})`;
-  } else {
-    replacement = JSON.stringify(value);
-  }
-
-  const fullPattern = new RegExp(`(${pattern})([^,\n]+)`, 'g');
-  code = code.replace(fullPattern, `$1${replacement}`);
-
-  editor.setValue(code);
-  set_dirty(true);
-}
-
-// Auto-switch to visual view on load
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    if (editor_ready && currentViewMode === 'visual') {
-      const editorContainer = document.querySelector('.exec_editor');
-      const visualPanel = document.getElementById('visual_settings_panel');
-      if (editorContainer && visualPanel) {
-        editorContainer.style.display = 'none';
-        visualPanel.style.display = 'block';
-        parse_and_render_config();
-      }
-    }
-  }, 500);
 });
 
 check_auth();

@@ -1,9 +1,0 @@
-[build]
-builder = "nixpacks"
-
-[deploy]
-startCommand = "npm start"
-
-[deploy.healthcheck]
-path = "/"
-port = 3000
