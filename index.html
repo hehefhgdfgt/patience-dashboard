@@ -339,6 +339,70 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
 
 #editor_container{width:100%;height:100%}
 .monaco-editor{background:var(--bg)!important}
+
+/* Visual Settings Panel */
+#visual_settings_panel{flex:1;overflow-y:auto;padding:28px;background:var(--bg);display:none}
+.vs_container{max-width:900px;margin:0 auto}
+.vs_header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.vs_header h2{font-size:20px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:10px}
+.vs_header h2 svg{width:20px;height:20px;stroke:var(--accent);stroke-width:2}
+.vs_toggle_view{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;background:var(--bg3);border:1px solid var(--border);color:var(--muted2);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+.vs_toggle_view:hover{background:var(--bg4);border-color:var(--border2);color:var(--text)}
+
+.vs_category{margin-bottom:20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.vs_cat_header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--bg3);cursor:pointer;transition:background 0.2s;user-select:none}
+.vs_cat_header:hover{background:var(--bg4)}
+.vs_cat_header svg{width:18px;height:18px;stroke:var(--accent);stroke-width:2;transition:transform 0.2s}
+.vs_cat_header.collapsed svg{transform:rotate(-90deg)}
+.vs_cat_title{font-size:14px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:0.05em}
+.vs_cat_content{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.vs_cat_content.collapsed{display:none}
+
+.vs_section{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.vs_section_header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.vs_section_title{font-size:13px;font-weight:600;color:var(--text)}
+.vs_section_content{display:flex;flex-direction:column;gap:10px}
+
+.vs_row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.vs_row:last-child{border-bottom:none;padding-bottom:0}
+.vs_row:first-child{padding-top:0}
+.vs_label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted2)}
+.vs_label svg{width:14px;height:14px;stroke:var(--muted);stroke-width:2}
+
+/* Toggle Switch */
+.vs_toggle{width:44px;height:24px;border-radius:12px;background:var(--bg4);position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0}
+.vs_toggle.active{background:var(--accent)}
+.vs_toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text);transition:transform 0.2s}
+.vs_toggle.active::after{transform:translateX(20px)}
+
+/* Inputs */
+.vs_input{padding:8px 12px;border-radius:6px;font-size:13px;background:var(--bg4);border:1px solid var(--border);color:var(--text);outline:none;transition:border-color 0.2s;width:120px;font-family:'Geist Mono',monospace}
+.vs_input:focus{border-color:var(--accent)}
+.vs_input_small{width:60px}
+.vs_input_color{width:40px;height:28px;border:none;border-radius:6px;cursor:pointer;background:transparent}
+
+.vs_select{padding:8px 12px;border-radius:6px;font-size:13px;background:var(--bg4);border:1px solid var(--border);color:var(--text);outline:none;cursor:pointer;width:140px}
+.vs_select:focus{border-color:var(--accent)}
+
+/* Keybind */
+.vs_keybind{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:6px;background:var(--bg4);border:1px solid var(--border);font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted2);cursor:pointer;transition:all 0.2s;min-width:80px;justify-content:center}
+.vs_keybind:hover{border-color:var(--accent);color:var(--text)}
+.vs_keybind.recording{border-color:#ef4444;color:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* Nested section */
+.vs_nested{margin-left:16px;padding-left:16px;border-left:2px solid var(--border)}
+.vs_nested .vs_section{background:var(--bg2)}
+
+/* Items list */
+.vs_items{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.vs_item{padding:4px 10px;border-radius:4px;font-size:11px;background:var(--bg4);border:1px solid var(--border);color:var(--muted2);font-family:'Geist Mono',monospace}
+
+/* Array inputs */
+.vs_array_input{width:100%;padding:8px 12px;border-radius:6px;font-size:12px;background:var(--bg4);border:1px solid var(--border);color:var(--text);outline:none;resize:vertical;min-height:60px;font-family:'Geist Mono',monospace}
+
+/* Value display */
+.vs_value{font-size:13px;color:var(--accent);font-family:'Geist Mono',monospace}
 </style>
 </head>
 <body>
@@ -493,6 +557,10 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
             <span id="current_config_name">nil</span>
           </div>
           <div class="exec_header_buttons">
+            <button class="exec_reset_btn" onclick="toggle_editor_view()" style="display:flex;align-items:center;gap:6px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              visual
+            </button>
             <button class="exec_reset_btn" onclick="do_reset()">reset</button>
             <button class="exec_set_btn" onclick="do_set()">set</button>
           </div>
@@ -502,6 +570,22 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
         </div>
         <div class="exec_status_bar">
           <span id="save_status" class="exec_status saved">saved</span>
+        </div>
+      </div>
+
+      <div id="visual_settings_panel">
+        <div class="vs_container">
+          <div class="vs_header">
+            <h2>
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.8 17.8l-4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34l-4.24-4.24"></path></svg>
+              config settings
+            </h2>
+            <button class="vs_toggle_view" onclick="toggle_editor_view()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+              code view
+            </button>
+          </div>
+          <div id="vs_categories"></div>
         </div>
       </div>
     </div>
