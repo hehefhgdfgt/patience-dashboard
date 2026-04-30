@@ -45,8 +45,13 @@ local function httpPost(url, data)
     end
 end
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ROBLOX_USERNAME = LocalPlayer and LocalPlayer.Name or "unknown"
+
 print("[POLLER] Starting Roblox poller...")
 print("[POLLER] Server URL:", SERVER_URL)
+print("[POLLER] Roblox username:", ROBLOX_USERNAME)
 
 while true do
     local success, err = pcall(function()
@@ -74,7 +79,10 @@ while true do
                             warn("[EXECUTE] Script failed:", execErr)
                         end
 
-                        httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", "")
+                        local execData = game:GetService("HttpService"):JSONEncode({
+                            robloxUsername = ROBLOX_USERNAME
+                        })
+                        httpPost(SERVER_URL .. "/api/commands/" .. cmd.name .. "/executed", execData)
 
                         if i < #data.commands then
                             print("[EXECUTE] Waiting before next command...")

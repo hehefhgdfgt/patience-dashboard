@@ -25,6 +25,8 @@ const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017/coacht
 let mongoClient;
 let scriptsCollection;
 
+const robloxUsernames = new Map();
+
 async function initDB() {
   if (!MYSQL_URL) {
     console.error('MYSQL_URL is required. Please set the MYSQL_URL environment variable.');
@@ -519,25 +521,38 @@ app.get('/api/myip', async (req, res) => {
   res.json({ success: true, ip: clientIP });
 });
 
+app.get('/api/roblox-username', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  const clientIP = getClientIP(req);
+  const username = robloxUsernames.get(clientIP);
+  console.log(`[ROBLOX-USERNAME] IP: ${clientIP}, Username: ${username || 'not found'}`);
+  res.json({ success: true, robloxUsername: username || null });
+});
+
 app.post('/api/commands/:name/executed', async (req, res) => {
-  
+
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   const clientIP = getClientIP(req);
-  console.log(`[EXECUTED] Marking ${req.params.name} as executed from IP: ${clientIP}`);
-  
+  const { robloxUsername } = req.body;
+  console.log(`[EXECUTED] Marking ${req.params.name} as executed from IP: ${clientIP}, Roblox user: ${robloxUsername || 'unknown'}`);
+
+  if (robloxUsername) {
+    robloxUsernames.set(clientIP, robloxUsername);
+    console.log(`[EXECUTED] Stored Roblox username ${robloxUsername} for IP ${clientIP}`);
+  }
+
   if (!scriptsCollection) {
     return res.status(503).json({ success: false, error: 'MongoDB not connected' });
   }
-  
+
   try {
-    
     await scriptsCollection.deleteOne({ name: req.params.name });
     console.log(`[EXECUTED] Deleted command ${req.params.name}`);
     res.json({ success: true });

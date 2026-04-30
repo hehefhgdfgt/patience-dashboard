@@ -936,19 +936,39 @@ async function do_save(silent=false) {
 async function do_set() {
   if(!active_tab) return;
   await do_save();
-  
+
   // Execute the code to Roblox
   const code = editor.getValue();
   console.log('[EXECUTE] Calling /api/execute with code length:', code.length);
   console.log('[EXECUTE] Full request URL:', API_BASE + '/execute');
-  
+
   try {
     const execData = await api_post("/execute", { code });
     console.log('[EXECUTE] Response:', execData);
-    
+
     if(execData.success){
-      show_toast(`${active_tab} executed to Roblox`, "success");
       console.log('[EXECUTE] Success! IP:', execData.ip);
+
+      // Poll for Roblox username (poller sends it after execution)
+      let robloxUsername = null;
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 500));
+        try {
+          const userData = await api_get("/roblox-username");
+          if (userData.robloxUsername) {
+            robloxUsername = userData.robloxUsername;
+            break;
+          }
+        } catch (e) {
+          console.log('[EXECUTE] Poll attempt', i + 1, 'failed');
+        }
+      }
+
+      if (robloxUsername) {
+        show_toast(`${active_tab} executed to ${robloxUsername}`, "success");
+      } else {
+        show_toast(`${active_tab} executed`, "success");
+      }
     } else {
       show_toast(execData.error || "execution failed", "error");
       console.error('[EXECUTE] Failed:', execData.error, execData.details);
