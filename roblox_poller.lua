@@ -48,6 +48,14 @@ end
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ROBLOX_USERNAME = LocalPlayer and LocalPlayer.Name or "unknown"
+local HttpService = game:GetService("HttpService")
+
+local function sendHeartbeat()
+    local heartbeatData = HttpService:JSONEncode({
+        robloxUsername = ROBLOX_USERNAME
+    })
+    httpPost(SERVER_URL .. "/api/poller/heartbeat", heartbeatData)
+end
 
 print("[POLLER] Starting Roblox poller...")
 print("[POLLER] Server URL:", SERVER_URL)
@@ -55,7 +63,9 @@ print("[POLLER] Roblox username:", ROBLOX_USERNAME)
 
 while true do
     local success, err = pcall(function()
-        
+        -- Send heartbeat to show we're alive
+        sendHeartbeat()
+
         local response = httpGet(SERVER_URL .. "/api/commands/pending")
         
         if response then

@@ -26,6 +26,8 @@ let mongoClient;
 let scriptsCollection;
 
 const robloxUsernames = new Map();
+const pollerHeartbeats = new Map();
+const POLLER_TIMEOUT_MS = 10000; // 10 seconds without heartbeat = not ready
 
 async function initDB() {
   if (!MYSQL_URL) {
@@ -527,6 +529,39 @@ app.get('/api/roblox-username', async (req, res) => {
   const username = robloxUsernames.get(clientIP);
   console.log(`[ROBLOX-USERNAME] IP: ${clientIP}, Username: ${username || 'not found'}`);
   res.json({ success: true, robloxUsername: username || null });
+});
+
+app.post('/api/poller/heartbeat', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  const clientIP = getClientIP(req);
+  const { robloxUsername } = req.body;
+  pollerHeartbeats.set(clientIP, {
+    lastSeen: Date.now(),
+    robloxUsername: robloxUsername || null
+  });
+  console.log(`[HEARTBEAT] Poller alive from IP: ${clientIP}, User: ${robloxUsername || 'unknown'}`);
+  res.json({ success: true });
+});
+
+app.get('/api/poller/status', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  const clientIP = getClientIP(req);
+  const heartbeat = pollerHeartbeats.get(clientIP);
+
+  if (!heartbeat) {
+    return res.json({ success: true, ready: false, message: 'not ready' });
+  }
+
+  const timeSinceLastSeen = Date.now() - heartbeat.lastSeen;
+  const isReady = timeSinceLastSeen < POLLER_TIMEOUT_MS;
+
+  console.log(`[STATUS] IP: ${clientIP}, Ready: ${isReady}, Last seen: ${timeSinceLastSeen}ms ago`);
+  res.json({
+    success: true,
+    ready: isReady,
+    message: isReady ? 'ready!' : 'not ready',
+    robloxUsername: heartbeat.robloxUsername
+  });
 });
 
 app.post('/api/commands/:name/executed', async (req, res) => {

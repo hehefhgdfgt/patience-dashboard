@@ -937,6 +937,21 @@ async function do_set() {
   if(!active_tab) return;
   await do_save();
 
+  // Check if poller is ready first
+  console.log('[EXECUTE] Checking poller status...');
+  let pollerStatus;
+  try {
+    pollerStatus = await api_get("/poller/status");
+    console.log('[EXECUTE] Poller status:', pollerStatus);
+  } catch (e) {
+    console.log('[EXECUTE] Failed to get poller status');
+  }
+
+  // If not ready, show not ready and still send command
+  if (!pollerStatus || !pollerStatus.ready) {
+    show_toast("not ready", "error");
+  }
+
   // Execute the code to Roblox
   const code = editor.getValue();
   console.log('[EXECUTE] Calling /api/execute with code length:', code.length);
@@ -949,14 +964,16 @@ async function do_set() {
     if(execData.success){
       console.log('[EXECUTE] Success! IP:', execData.ip);
 
-      // Poll for Roblox username (poller sends it after execution)
+      // Poll for execution confirmation (poller will be ready after executing)
+      let executionConfirmed = false;
       let robloxUsername = null;
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 20; i++) { // 10 seconds max
         await new Promise(r => setTimeout(r, 500));
         try {
-          const userData = await api_get("/roblox-username");
-          if (userData.robloxUsername) {
-            robloxUsername = userData.robloxUsername;
+          const statusData = await api_get("/poller/status");
+          if (statusData.ready && statusData.robloxUsername) {
+            executionConfirmed = true;
+            robloxUsername = statusData.robloxUsername;
             break;
           }
         } catch (e) {
@@ -964,11 +981,13 @@ async function do_set() {
         }
       }
 
-      if (robloxUsername) {
-        show_toast(`${active_tab} executed to ${robloxUsername}`, "success");
-      } else {
-        show_toast(`${active_tab} executed`, "success");
+      if (executionConfirmed) {
+        show_toast("ready!", "success");
+      } else if (pollerStatus && pollerStatus.ready) {
+        // Poller was ready but execution not confirmed
+        show_toast("ready!", "success");
       }
+      // If not ready was already shown, we don't show anything else
     } else {
       show_toast(execData.error || "execution failed", "error");
       console.error('[EXECUTE] Failed:', execData.error, execData.details);
