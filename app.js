@@ -1207,25 +1207,36 @@ async function do_reset() {
 }
 
 function update_selected_btn() {
-  const btn = document.getElementById("selected_cfg_btn");
-  if (!btn) {
-    console.log('[POLLER] Button not found!');
+  // Update the config indicator to show poller status
+  const configNameEl = document.getElementById("current_config_name");
+  const configDot = document.querySelector(".exec_config_dot");
+
+  if (!configNameEl) {
+    console.log('[POLLER] current_config_name element not found!');
     return;
   }
 
-  console.log('[POLLER] Updating button, ready:', poller_status.ready, 'username:', poller_status.robloxUsername);
+  console.log('[POLLER] Updating status, ready:', poller_status.ready, 'username:', poller_status.robloxUsername);
 
   // Show poller status instead of config name
   if (poller_status.ready) {
-    btn.textContent = "we're ready";
-    btn.className = "topbar_btn btn_selected_cfg ready";
-    btn.title = poller_status.robloxUsername ? "connected: " + poller_status.robloxUsername : "poller connected";
-    console.log('[POLLER] Set button to READY (green)');
+    configNameEl.textContent = "we're ready";
+    configNameEl.style.color = "#4ade80"; // green
+    if (configDot) {
+      configDot.style.background = "#4ade80";
+      configDot.style.boxShadow = "0 0 8px rgba(74,222,128,0.6)";
+    }
+    configNameEl.title = poller_status.robloxUsername ? "connected: " + poller_status.robloxUsername : "poller connected";
+    console.log('[POLLER] Set status to READY (green)');
   } else {
-    btn.textContent = "not ready";
-    btn.className = "topbar_btn btn_selected_cfg not-ready";
-    btn.title = "poller not detected - inject to connect";
-    console.log('[POLLER] Set button to NOT READY (red)');
+    configNameEl.textContent = "not ready";
+    configNameEl.style.color = "#f87171"; // red
+    if (configDot) {
+      configDot.style.background = "#f87171";
+      configDot.style.boxShadow = "0 0 8px rgba(248,113,113,0.6)";
+    }
+    configNameEl.title = "poller not detected - inject to connect";
+    console.log('[POLLER] Set status to NOT READY (red)');
   }
 }
 
