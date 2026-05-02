@@ -1208,38 +1208,50 @@ async function do_reset() {
 
 function update_selected_btn() {
   const btn = document.getElementById("selected_cfg_btn");
-  if (!btn) return;
+  if (!btn) {
+    console.log('[POLLER] Button not found!');
+    return;
+  }
+
+  console.log('[POLLER] Updating button, ready:', poller_status.ready, 'username:', poller_status.robloxUsername);
 
   // Show poller status instead of config name
   if (poller_status.ready) {
     btn.textContent = "we're ready";
     btn.className = "topbar_btn btn_selected_cfg ready";
     btn.title = poller_status.robloxUsername ? "connected: " + poller_status.robloxUsername : "poller connected";
+    console.log('[POLLER] Set button to READY (green)');
   } else {
     btn.textContent = "not ready";
     btn.className = "topbar_btn btn_selected_cfg not-ready";
     btn.title = "poller not detected - inject to connect";
+    console.log('[POLLER] Set button to NOT READY (red)');
   }
 }
 
 async function check_poller_status() {
+  console.log('[POLLER] Checking poller status...');
   try {
     const data = await api_get("/poller/status");
+    console.log('[POLLER] Status response:', data);
     poller_status = {
       ready: data.ready,
       robloxUsername: data.robloxUsername
     };
     update_selected_btn();
   } catch (e) {
+    console.log('[POLLER] Status check failed:', e);
     poller_status = { ready: false, robloxUsername: null };
     update_selected_btn();
   }
 }
 
 function start_poller_status_polling() {
+  console.log('[POLLER] Starting poller status polling...');
   if (poller_status_interval) clearInterval(poller_status_interval);
   check_poller_status(); // Check immediately
   poller_status_interval = setInterval(check_poller_status, 3000); // Check every 3 seconds
+  console.log('[POLLER] Polling started, interval:', poller_status_interval);
 }
 
 function stop_poller_status_polling() {
