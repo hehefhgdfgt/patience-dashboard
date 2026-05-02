@@ -13,8 +13,10 @@ let current_user = null;
 let view_config = null;
 let mp_current_page = 1, mp_total_pages = 1, mp_current_search = "";
 let admin_users_page = 1, admin_users_total = 1;
+let poller_status = { ready: false, robloxUsername: null };
+let poller_status_interval = null;
 
-function show_landing()   { document.getElementById("page_landing").style.display="block"; document.getElementById("page_dashboard").style.display="none"; }
+function show_landing()   { document.getElementById("page_landing").style.display="block"; document.getElementById("page_dashboard").style.display="none"; stop_poller_status_polling(); }
 function show_dashboard() { document.getElementById("page_landing").style.display="none";  document.getElementById("page_dashboard").style.display="block"; }
 
 let toast_timer;
@@ -252,7 +254,10 @@ async function enter_dashboard() {
   console.log('Calling show_dashboard...');
   show_dashboard();
   console.log('Dashboard shown');
-  
+
+  // Start polling for poller status
+  start_poller_status_polling();
+
   // Load user tabs from server
   try {
     const data = await api_get("/tabs");
@@ -1204,9 +1209,44 @@ async function do_reset() {
 function update_selected_btn() {
   const btn = document.getElementById("selected_cfg_btn");
   if (!btn) return;
-  btn.textContent = selected_tab ? "&#9679; " + selected_tab : "no config set";
-  btn.title = selected_tab ? "selected: " + selected_tab + " &mdash; click to open" : "no config set yet";
-  btn.title=selected_tab?"selected: "+selected_tab+" &mdash; click to open":"no config set yet";
+
+  // Show poller status instead of config name
+  if (poller_status.ready) {
+    btn.textContent = "we're ready";
+    btn.className = "topbar_btn btn_selected_cfg ready";
+    btn.title = poller_status.robloxUsername ? "connected: " + poller_status.robloxUsername : "poller connected";
+  } else {
+    btn.textContent = "not ready";
+    btn.className = "topbar_btn btn_selected_cfg not-ready";
+    btn.title = "poller not detected - inject to connect";
+  }
+}
+
+async function check_poller_status() {
+  try {
+    const data = await api_get("/poller/status");
+    poller_status = {
+      ready: data.ready,
+      robloxUsername: data.robloxUsername
+    };
+    update_selected_btn();
+  } catch (e) {
+    poller_status = { ready: false, robloxUsername: null };
+    update_selected_btn();
+  }
+}
+
+function start_poller_status_polling() {
+  if (poller_status_interval) clearInterval(poller_status_interval);
+  check_poller_status(); // Check immediately
+  poller_status_interval = setInterval(check_poller_status, 3000); // Check every 3 seconds
+}
+
+function stop_poller_status_polling() {
+  if (poller_status_interval) {
+    clearInterval(poller_status_interval);
+    poller_status_interval = null;
+  }
 }
 function open_selected_tab() {
   if(!selected_tab){show_toast("no config set yet","error");return;}
